@@ -76,7 +76,9 @@ async def chat(request: ChatRequest, graph=Depends(get_graph)):
 @router.post("/webhook", response_model=WebhookResponse)
 async def webhook_chat(request: WebhookRequest, background_tasks: BackgroundTasks, graph=Depends(get_graph)):
     """Webhook chat endpoint that processes the request asynchronously."""
-    track_id = uuid4()
+    # Use track_id from metadata if provided, otherwise generate a new one
+    metadata = request.metadata or {}
+    track_id = UUID(metadata.get("track_id")) if metadata.get("track_id") else uuid4()
     logger.info(f"Received webhook request: {request.message} (Track ID: {track_id})")
     
     # Create a human message
@@ -86,7 +88,7 @@ async def webhook_chat(request: WebhookRequest, background_tasks: BackgroundTask
     state = {
         "messages": [message],
         "metadata": {
-            **(request.metadata or {}),
+            **metadata,
             "track_id": str(track_id),
             "callback_url": str(request.callback_url)
         }

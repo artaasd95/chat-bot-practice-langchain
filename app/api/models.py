@@ -30,7 +30,7 @@ class WebhookRequest(BaseModel):
     callback_url: HttpUrl = Field(..., description="URL to send the response to")
     metadata: Optional[Dict[str, Any]] = Field(
         default=None,
-        description="Additional metadata for the request"
+        description="Additional metadata for the request, including track_id if provided by client"
     )
 
 
