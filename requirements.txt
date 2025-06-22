@@ -1,0 +1,21 @@
+# Core dependencies
+fastapi>=0.104.0
+uvicorn>=0.23.2
+pydantic>=2.4.2
+python-dotenv>=1.0.0
+loguru>=0.7.2
+
+# LangChain and LangGraph
+langchain>=0.0.335
+langchain-openai>=0.0.2
+langgraph>=0.0.19
+
+# Async HTTP
+aiohttp>=3.8.6
+tenacity>=8.2.3
+
+# Interactive CLI (if needed)
+prompt-toolkit>=3.0.38
+
+# For production
+gunicorn>=21.2.0  # For production deployment
