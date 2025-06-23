@@ -1,0 +1,100 @@
+version: '3.8'
+
+# Development override for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: auth.Dockerfile
+      target: development
+    volumes:
+      - ./app:/app/app:ro
+      - ./logs:/app/logs
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+    command: uvicorn app.auth_main:app --host 0.0.0.0 --port 8001 --reload --log-level debug
+    ports:
+      - "8001:8001"  # Expose for direct access during development
+
+  chat:
+    build:
+      context: .
+      dockerfile: chat.Dockerfile
+      target: development
+    volumes:
+      - ./app:/app/app:ro
+      - ./logs:/app/logs
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+    command: uvicorn app.chat_main:app --host 0.0.0.0 --port 8002 --reload --log-level debug
+    ports:
+      - "8002:8002"  # Expose for direct access during development
+
+  admin:
+    build:
+      context: .
+      dockerfile: admin.Dockerfile
+      target: development
+    volumes:
+      - ./app:/app/app:ro
+      - ./logs:/app/logs
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+    command: uvicorn app.admin_main:app --host 0.0.0.0 --port 8003 --reload --log-level debug
+    ports:
+      - "8003:8003"  # Expose for direct access during development
+
+  postgres:
+    ports:
+      - "5432:5432"  # Expose for direct database access during development
+    environment:
+      - POSTGRES_DB=chatbot_db_dev
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./scripts/init-dev-db.sql:/docker-entrypoint-initdb.d/init-dev-db.sql:ro
+
+  redis:
+    ports:
+      - "6379:6379"  # Expose for direct Redis access during development
+    volumes:
+      - redis_dev_data:/data
+
+  # Development tools
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+  pgadmin_dev_data:
+
+networks:
+  default:
+    name: chatbot_dev_network

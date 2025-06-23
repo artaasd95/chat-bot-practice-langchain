@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # Database service
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: chatbot
+      POSTGRES_USER: chatbot_user
+      POSTGRES_PASSWORD: chatbot_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - chatbot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatbot_user -d chatbot"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for session management and caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - chatbot-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Authentication Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://chatbot_user:chatbot_password@postgres:5432/chatbot
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=your-super-secret-key-change-this-in-production
+      - SERVICE_NAME=auth
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - chatbot-network
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Chat Service
+  chat-service:
+    build:
+      context: .
+      dockerfile: chat.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://chatbot_user:chatbot_password@postgres:5432/chatbot
+      - REDIS_URL=redis://redis:6379
+      - AUTH_SERVICE_URL=http://auth-service:8000
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SERVICE_NAME=chat
+    ports:
+      - "8002:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    networks:
+      - chatbot-network
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Admin Service
+  admin-service:
+    build:
+      context: .
+      dockerfile: admin.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://chatbot_user:chatbot_password@postgres:5432/chatbot
+      - REDIS_URL=redis://redis:6379
+      - AUTH_SERVICE_URL=http://auth-service:8000
+      - SERVICE_NAME=admin
+    ports:
+      - "8003:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    networks:
+      - chatbot-network
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway (Nginx)
+  api-gateway:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - auth-service
+      - chat-service
+      - admin-service
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  chatbot-network:
+    driver: bridge

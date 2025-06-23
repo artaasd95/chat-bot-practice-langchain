@@ -1,0 +1,12 @@
+# Chat service specific dependencies
+-r requirements-shared.txt
+
+# LangChain and AI dependencies
+langchain==0.0.350
+langchain-community==0.0.1
+langchain-openai==0.0.2
+openai==1.3.7
+langsmith==0.0.69
+
+# Additional chat-specific dependencies
+websockets==12.0

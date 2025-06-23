@@ -1,33 +1,51 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import sessionmaker
-from app.config import settings
-from app.database.models import Base
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.orm import declarative_base
+import logging
 import os
 
-# Create async engine
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    future=True
-)
+from app.config import settings
 
-# Create async session factory
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
+# Create declarative base
+Base = declarative_base()
+
+logger = logging.getLogger(__name__)
+
+# Global variables for engine and session
+engine = None
+AsyncSessionLocal = None
 
 
-async def create_tables():
-    """Create all tables in the database."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+def get_db_engine():
+    """Get or create database engine."""
+    global engine
+    if engine is None:
+        engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=False,
+            future=True,
+            pool_pre_ping=True,
+            pool_recycle=300
+        )
+    return engine
+
+
+def get_session_factory():
+    """Get or create session factory."""
+    global AsyncSessionLocal
+    if AsyncSessionLocal is None:
+        engine = get_db_engine()
+        AsyncSessionLocal = async_sessionmaker(
+            engine,
+            class_=AsyncSession,
+            expire_on_commit=False
+        )
+    return AsyncSessionLocal
 
 
 async def get_db() -> AsyncSession:
-    """Dependency to get database session."""
-    async with AsyncSessionLocal() as session:
+    """Get database session."""
+    session_factory = get_session_factory()
+    async with session_factory() as session:
         try:
             yield session
         finally:
@@ -35,31 +53,53 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db():
-    """Initialize the database."""
-    # Create tables
-    await create_tables()
+    """Initialize database tables and create default admin user (auth service only)."""
+    service_name = os.getenv('SERVICE_NAME', 'main')
     
-    # Create default admin user if it doesn't exist
-    from app.auth.crud import create_user
-    from app.auth.schemas import UserCreate
+    # Only initialize tables and admin user in auth service
+    if service_name != 'auth':
+        logger.info(f"Skipping database initialization in {service_name} service")
+        return
     
-    async with AsyncSessionLocal() as session:
-        # Check if admin user exists
-        from sqlalchemy import select
-        from app.database.models import User
-        
-        result = await session.execute(
-            select(User).where(User.email == settings.ADMIN_EMAIL)
-        )
-        admin_user = result.scalar_one_or_none()
-        
-        if not admin_user:
-            # Create admin user
-            admin_data = UserCreate(
-                email=settings.ADMIN_EMAIL,
-                password=settings.ADMIN_PASSWORD,
-                full_name="System Administrator",
-                is_admin=True
+    from app.database.models import User
+    from app.auth.utils import hash_password
+    
+    engine = get_db_engine()
+    session_factory = get_session_factory()
+    
+    # Create all tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    logger.info("Database tables created successfully")
+    
+    # Create default admin user if not exists
+    async with session_factory() as session:
+        try:
+            # Check if admin user exists
+            from sqlalchemy import select
+            result = await session.execute(
+                select(User).where(User.email == settings.ADMIN_EMAIL)
             )
-            await create_user(session, admin_data)
-            print(f"Admin user created: {settings.ADMIN_EMAIL}")
+            admin_user = result.scalar_one_or_none()
+            
+            if not admin_user:
+                # Create admin user
+                hashed_password = hash_password(settings.ADMIN_PASSWORD)
+                admin_user = User(
+                    email=settings.ADMIN_EMAIL,
+                    hashed_password=hashed_password,
+                    full_name="System Administrator",
+                    is_active=True,
+                    is_admin=True
+                )
+                session.add(admin_user)
+                await session.commit()
+                logger.info(f"Default admin user created: {settings.ADMIN_EMAIL}")
+            else:
+                logger.info("Admin user already exists")
+                
+        except Exception as e:
+            logger.error(f"Error creating admin user: {e}")
+            await session.rollback()
+            raise
