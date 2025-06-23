@@ -1,42 +1,45 @@
-from typing import List
-from pydantic_settings import BaseSettings
-from pydantic import Field
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
+from pydantic import BaseSettings
+from typing import Optional
 
 
 class Settings(BaseSettings):
-    """Application settings."""
     # API Settings
-    API_PREFIX: str = "/api"
-    DEBUG: bool = Field(default=False)
-    HOST: str = Field(default="0.0.0.0")
-    PORT: int = Field(default=8000)
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Chat Bot API"
+    VERSION: str = "1.0.0"
+    DESCRIPTION: str = "A chat bot API using LangChain and LangGraph"
     
     # CORS Settings
-    CORS_ORIGINS: List[str] = Field(default=["*"])
+    BACKEND_CORS_ORIGINS: list = ["*"]
+    
+    # Database Settings
+    DATABASE_URL: str = "sqlite+aiosqlite:///./chatbot.db"
+    
+    # Authentication Settings
+    SECRET_KEY: str = "your-secret-key-change-this-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    
+    # Admin Settings
+    ADMIN_EMAIL: str = "admin@example.com"
+    ADMIN_PASSWORD: str = "admin123"
     
     # LLM Settings
-    OPENAI_API_KEY: str = Field(default="")
-    LLM_MODEL: str = Field(default="gpt-3.5-turbo")
-    LLM_TEMPERATURE: float = Field(default=0.7)
+    OPENAI_API_KEY: Optional[str] = None
+    ANTHROPIC_API_KEY: Optional[str] = None
+    MODEL_NAME: str = "gpt-3.5-turbo"
     
-    # Logging Settings
-    LOG_LEVEL: str = Field(default="INFO")
-    LOG_FILE: str = Field(default="logs/langgraph_chat.log")
+    # Logging
+    LOG_LEVEL: str = "INFO"
     
     # Webhook Settings
-    WEBHOOK_TIMEOUT: int = Field(default=60)  # seconds
-    WEBHOOK_RETRY_ATTEMPTS: int = Field(default=3)
-    WEBHOOK_RETRY_DELAY: int = Field(default=2)  # seconds
+    WEBHOOK_SECRET: Optional[str] = None
+    WEBHOOK_TIMEOUT: int = 30
     
     class Config:
         env_file = ".env"
         case_sensitive = True
 
 
-# Create settings instance
 settings = Settings()

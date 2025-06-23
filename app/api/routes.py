@@ -1,178 +1,133 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, Request, HTTPException, status
-from langchain_core.messages import HumanMessage
-import asyncio
-from uuid import uuid4, UUID
-from datetime import datetime
-from loguru import logger
+from fastapi import APIRouter, HTTPException, Request, Depends
+from typing import Dict, Any
+import logging
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.models import (
-    ChatRequest,
-    ChatResponse,
-    WebhookRequest,
-    WebhookResponse,
-    WebhookStatusResponse,
-    HealthResponse,
+    ChatRequest, ChatResponse, WebhookRequest, WebhookResponse,
+    WebhookStatusResponse, HealthResponse
 )
-from app.services.webhook import send_webhook_response
-from app import __version__
+from app.config import settings
+from app.auth.dependencies import get_current_active_user, get_optional_current_user
+from app.database.database import get_db
+from app.database.models import User
 
 router = APIRouter()
-
-# In-memory store for tracking webhook requests
-# In a production environment, this would be replaced with a persistent store
-webhook_requests = {}
-
-
-async def get_graph(request: Request):
-    """Get the graph from the app state."""
-    if not hasattr(request.app.state, "graph"):
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Graph not initialized"
-        )
-    return request.app.state.graph
+logger = logging.getLogger(__name__)
 
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint."""
-    return HealthResponse(version=__version__)
+    return HealthResponse(
+        status="healthy",
+        message="Chat Bot API is running",
+        version="1.0.0"
+    )
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, graph=Depends(get_graph)):
-    """Direct response chat endpoint."""
-    request_id = uuid4()
-    logger.info(f"Received chat request: {request.message} (ID: {request_id})")
-    
-    # Create a human message
-    message = HumanMessage(content=request.message)
-    
-    # Prepare the initial state
-    state = {
-        "messages": [message],
-        "metadata": {**(request.metadata or {}), "request_id": str(request_id)}
-    }
-    
+async def chat(
+    request: ChatRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+) -> ChatResponse:
+    """Direct chat endpoint - requires authentication."""
     try:
-        # Execute the graph
-        result = await graph.ainvoke(state)
+        # Import here to avoid circular imports
+        from app.main import graph
         
-        logger.info(f"Chat response generated for request ID: {request_id}")
+        if graph is None:
+            raise HTTPException(status_code=500, detail="Graph not initialized")
+        
+        # Prepare the input for the graph
+        graph_input = {
+            "messages": [{"role": "user", "content": request.message}],
+            "user_id": str(current_user.id),
+            "user_email": current_user.email
+        }
+        
+        # Invoke the graph
+        result = await graph.ainvoke(graph_input)
+        
+        # Extract the response
+        if "messages" in result and result["messages"]:
+            response_message = result["messages"][-1]["content"]
+        else:
+            response_message = "I'm sorry, I couldn't process your request."
+        
+        # TODO: Save chat session and message to database
+        # This can be implemented later to store chat history
         
         return ChatResponse(
-            response=result["response"],
-            request_id=request_id,
-            metadata=result.get("metadata")
+            response=response_message,
+            conversation_id=request.conversation_id or f"conv_{current_user.id}_{request.message[:10]}"
         )
+        
     except Exception as e:
-        logger.error(f"Error processing chat request {request_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error processing request: {str(e)}"
-        )
+        logger.error(f"Error in chat endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@router.post("/webhook", response_model=WebhookResponse)
-async def webhook_chat(request: WebhookRequest, background_tasks: BackgroundTasks, graph=Depends(get_graph)):
-    """Webhook chat endpoint that processes the request asynchronously."""
-    # Use track_id from metadata if provided, otherwise generate a new one
-    metadata = request.metadata or {}
-    track_id = UUID(metadata.get("track_id")) if metadata.get("track_id") else uuid4()
-    logger.info(f"Received webhook request: {request.message} (Track ID: {track_id})")
-    
-    # Create a human message
-    message = HumanMessage(content=request.message)
-    
-    # Prepare the initial state
-    state = {
-        "messages": [message],
-        "metadata": {
-            **metadata,
-            "track_id": str(track_id),
-            "callback_url": str(request.callback_url)
-        }
-    }
-    
-    # Store initial status
-    webhook_requests[str(track_id)] = WebhookStatusResponse(
-        track_id=track_id,
-        status="processing",
-        timestamp=datetime.utcnow()
-    )
-    
-    # Add the task to background tasks
-    background_tasks.add_task(
-        process_webhook_request,
-        state,
-        graph,
-        str(request.callback_url),
-        track_id
-    )
-    
-    logger.info(f"Webhook request queued with track_id: {track_id}")
-    
-    return WebhookResponse(track_id=track_id)
-
-
-async def process_webhook_request(state, graph, callback_url, track_id):
-    """Process a webhook request in the background."""
-    track_id_str = str(track_id)
-    logger.info(f"Processing webhook request with track_id: {track_id_str}")
-    
+@router.post("/webhook/chat", response_model=WebhookResponse)
+async def webhook_chat(
+    request: WebhookRequest,
+    current_user: User = Depends(get_optional_current_user)
+) -> WebhookResponse:
+    """Webhook chat endpoint for external integrations."""
     try:
-        # Execute the graph
-        result = await graph.ainvoke(state)
+        # Validate webhook secret if configured
+        if settings.WEBHOOK_SECRET and request.secret != settings.WEBHOOK_SECRET:
+            raise HTTPException(status_code=401, detail="Invalid webhook secret")
         
-        # Update status
-        webhook_requests[track_id_str] = WebhookStatusResponse(
-            track_id=track_id,
-            status="completed",
-            timestamp=datetime.utcnow(),
-            response=result["response"]
+        # Import here to avoid circular imports
+        from app.main import graph
+        
+        if graph is None:
+            raise HTTPException(status_code=500, detail="Graph not initialized")
+        
+        # Use authenticated user if available, otherwise use webhook user
+        user_id = str(current_user.id) if current_user else "webhook_user"
+        user_email = current_user.email if current_user else "webhook@system.com"
+        
+        # Prepare the input for the graph
+        graph_input = {
+            "messages": [{"role": "user", "content": request.message}],
+            "user_id": user_id,
+            "user_email": user_email,
+            "webhook_id": request.webhook_id
+        }
+        
+        # Invoke the graph
+        result = await graph.ainvoke(graph_input)
+        
+        # Extract the response
+        if "messages" in result and result["messages"]:
+            response_message = result["messages"][-1]["content"]
+        else:
+            response_message = "I'm sorry, I couldn't process your request."
+        
+        return WebhookResponse(
+            success=True,
+            response=response_message,
+            webhook_id=request.webhook_id
         )
         
-        # Send the response to the callback URL
-        await send_webhook_response(callback_url, {
-            "track_id": track_id_str,
-            "response": result["response"],
-            "status": "completed",
-            "timestamp": datetime.utcnow().isoformat(),
-            "metadata": result.get("metadata")
-        })
-        
-        logger.info(f"Webhook response sent for track_id: {track_id_str}")
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error processing webhook request with track_id {track_id_str}: {str(e)}")
-        
-        # Update status
-        webhook_requests[track_id_str] = WebhookStatusResponse(
-            track_id=track_id,
-            status="failed",
-            timestamp=datetime.utcnow(),
-            error=str(e)
+        logger.error(f"Error in webhook chat endpoint: {str(e)}")
+        return WebhookResponse(
+            success=False,
+            response=f"Error processing request: {str(e)}",
+            webhook_id=request.webhook_id
         )
-        
-        # Send error response
-        try:
-            await send_webhook_response(callback_url, {
-                "track_id": track_id_str,
-                "error": str(e),
-                "status": "failed",
-                "timestamp": datetime.utcnow().isoformat()
-            })
-        except Exception as webhook_error:
-            logger.error(f"Failed to send error webhook for {track_id_str}: {str(webhook_error)}")
 
 
-@router.get("/webhook/{track_id}", response_model=WebhookStatusResponse)
-async def get_webhook_status(track_id: UUID):
-    """Get the status of a webhook request."""
-    track_id_str = str(track_id)
-    if track_id_str not in webhook_requests:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Request with track_id {track_id} not found"
-        )
-    
-    return webhook_requests[track_id_str]
+@router.get("/webhook/status", response_model=WebhookStatusResponse)
+async def webhook_status():
+    """Get webhook status."""
+    return WebhookStatusResponse(
+        active=True,
+        message="Webhook endpoint is active"
+    )

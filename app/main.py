@@ -1,64 +1,87 @@
-import asyncio
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from loguru import logger
+import logging
 
-from app.api.routes import router as api_router
 from app.config import settings
-from app.graph.builder import build_graph
-from app.services.llm import get_llm
-from app.utils.logging import setup_logging
+from app.api.routes import router as api_router
+from app.auth.routes import router as auth_router
+from app.admin.routes import router as admin_router
+from app.core.graph import build_graph
+from app.database.database import init_db
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, settings.LOG_LEVEL),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Global variable to store the graph
+graph = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle manager for the FastAPI application."""
-    # Setup
-    setup_logging()
-    logger.info("Starting LangGraph Chat API")
+    """Lifespan context manager for startup and shutdown events."""
+    # Startup
+    logger.info("Starting up the application...")
     
-    # Initialize the LLM
-    llm = get_llm()
+    # Initialize database
+    try:
+        await init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        raise
     
-    # Build the graph
-    app.state.graph = await build_graph(llm)
-    
-    logger.info("LangGraph Chat API started successfully")
+    # Build graph
+    global graph
+    try:
+        graph = build_graph()
+        logger.info("Graph built successfully")
+    except Exception as e:
+        logger.error(f"Failed to build graph: {e}")
+        raise
     
     yield
     
-    # Cleanup
-    logger.info("Shutting down LangGraph Chat API")
+    # Shutdown
+    logger.info("Shutting down the application...")
+    # Add any cleanup code here if needed
 
 
+# Create FastAPI app
 app = FastAPI(
-    title="LangGraph Chat API",
-    description="A scalable chat system built with LangGraph and FastAPI",
-    version="0.1.0",
-    lifespan=lifespan,
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    description=settings.DESCRIPTION,
+    lifespan=lifespan
 )
 
-# Configure CORS
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include API routes
-app.include_router(api_router, prefix="/api")
+app.include_router(auth_router, prefix=settings.API_V1_STR)
+app.include_router(admin_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
 async def root():
     """Root endpoint."""
     return {
-        "message": "Welcome to LangGraph Chat API",
+        "message": "Welcome to Chat Bot API",
+        "version": settings.VERSION,
         "docs": "/docs",
-        "version": app.version,
+        "authentication": "Required for chat endpoints"
     }
 
 
