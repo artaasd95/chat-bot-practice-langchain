@@ -37,11 +37,74 @@ Check the health status of the chat service.
 }
 ```
 
+### Enhanced Chat
+
+**POST** `/chat`
+
+Send a message using the enhanced graph with conversation history and API tool calling.
+
+#### Headers
+
+```
+Authorization: Bearer <access-token>
+Content-Type: application/json
+```
+
+#### Request Body
+
+```json
+{
+  "message": "Can you check the weather in New York and help me plan my day?",
+  "conversation_id": "conv_123e4567-e89b-12d3-a456-426614174000",
+  "context": {
+    "user_preferences": {
+      "language": "en",
+      "tone": "professional"
+    },
+    "metadata": {
+      "source": "web",
+      "timestamp": "2024-01-01T12:00:00Z"
+    }
+  }
+}
+```
+
+#### Response
+
+**Status: 200 OK**
+
+```json
+{
+  "response": "I've checked the weather in New York for you. It's currently 72°F with partly cloudy skies. Based on this pleasant weather, I'd recommend planning outdoor activities for your day. Here are some suggestions...",
+  "metadata": {
+    "model_used": "gpt-4",
+    "tokens_used": {
+      "input": 45,
+      "output": 85,
+      "total": 130
+    },
+    "processing_time_ms": 2150,
+    "timestamp": "2024-01-01T12:00:02Z",
+    "api_calls_made": 1,
+    "api_call_details": {
+      "url": "https://api.weather.com/v1/current",
+      "method": "GET",
+      "status_code": 200,
+      "response_summary": "Weather data retrieved successfully"
+    },
+    "history_loaded": true,
+    "messages_in_context": 8
+  },
+  "conversation_id": "conv_123e4567-e89b-12d3-a456-426614174000",
+  "request_id": "req_987f6543-e21c-34d5-b678-123456789abc"
+}
+```
+
 ### Direct Chat
 
 **POST** `/direct`
 
-Send a message directly to the AI without session persistence.
+Send a message directly to the AI without session persistence (legacy endpoint).
 
 #### Headers
 
@@ -481,6 +544,7 @@ data: {"type": "end", "message_id": "msg_123456", "total_chunks": 50, "timestamp
 ```json
 {
   "message": "string (required, max 4000 chars)",
+  "conversation_id": "string (optional, UUID)",
   "context": {
     "user_preferences": "object (optional)",
     "metadata": "object (optional)"
@@ -501,9 +565,19 @@ data: {"type": "end", "message_id": "msg_123456", "total_chunks": 50, "timestamp
       "total": "integer"
     },
     "processing_time_ms": "integer",
-    "timestamp": "string (ISO datetime)"
+    "timestamp": "string (ISO datetime)",
+    "api_calls_made": "integer (optional)",
+    "api_call_details": {
+      "url": "string (optional)",
+      "method": "string (optional)",
+      "status_code": "integer (optional)",
+      "response_summary": "string (optional)"
+    },
+    "history_loaded": "boolean",
+    "messages_in_context": "integer"
   },
-  "conversation_id": "string"
+  "conversation_id": "string",
+  "request_id": "string (UUID)"
 }
 ```
 
@@ -597,20 +671,39 @@ Chat endpoints have the following rate limits:
 - Session creation: 10 requests per minute per user
 - Session management: 100 requests per minute per user
 
-## LangGraph Integration
+## Enhanced LangGraph Integration
 
-The chat service uses LangGraph for intelligent conversation flow:
+The chat service uses an enhanced LangGraph implementation for intelligent conversation flow with advanced features:
 
-### Graph Nodes
+### Enhanced Graph Nodes
 
-1. **Preprocessing Node**: Analyzes user input, extracts intent, and prepares context
-2. **LLM Node**: Generates AI response using configured language model
-3. **Postprocessing Node**: Formats response, adds metadata, and handles follow-up actions
+1. **Load Conversation History**: Retrieves and loads previous conversation context
+2. **Preprocess Input**: Analyzes user input, extracts intent, and prepares context
+3. **Generate Response**: Creates AI response using configured language model with history context
+4. **Check for API Call**: Detects if the LLM response contains API tool calling requests
+5. **Make API Call**: Executes REST API calls when detected in LLM responses
+6. **Postprocess Output**: Formats response, adds metadata, and handles follow-up actions
+7. **Save to History**: Persists conversation messages to database for future context
+
+### Advanced Features
+
+#### API Tool Calling
+- **Automatic Detection**: Identifies API call requests in LLM responses
+- **REST API Support**: Makes HTTP requests to external APIs
+- **Response Integration**: Incorporates API results back into conversation
+- **Error Handling**: Graceful handling of API failures
+
+#### Conversation History Management
+- **Persistent Storage**: Automatic saving of all conversation messages
+- **Context Loading**: Intelligent loading of relevant conversation history
+- **Session Management**: Maintains conversation continuity across sessions
+- **History Summarization**: Efficient context management for long conversations
 
 ### Context Management
 
 - **Session Context**: Maintains conversation history and user preferences
 - **Message Context**: Includes immediate context for each message
+- **API Context**: Manages API call results and integration
 - **Global Context**: System-wide settings and configurations
 
 ### Model Configuration

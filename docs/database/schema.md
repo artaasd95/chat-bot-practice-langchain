@@ -96,13 +96,12 @@ Stores chat session information and metadata.
 ```sql
 CREATE TABLE chat_sessions (
     id SERIAL PRIMARY KEY,
-    uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+    uuid VARCHAR(36) UNIQUE NOT NULL,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    title VARCHAR(500),
+    title VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    is_active BOOLEAN DEFAULT TRUE,
-    metadata JSONB DEFAULT '{}'
+    is_active BOOLEAN DEFAULT TRUE
 );
 
 -- Indexes
@@ -119,13 +118,12 @@ CREATE INDEX idx_chat_sessions_metadata ON chat_sessions USING GIN(metadata);
 | Column | Type | Description | Constraints |
 |--------|------|-------------|-------------|
 | `id` | SERIAL | Primary key, auto-incrementing | PRIMARY KEY |
-| `uuid` | UUID | Unique identifier for external references | UNIQUE, NOT NULL |
+| `uuid` | VARCHAR(36) | Unique identifier for external references | UNIQUE, NOT NULL |
 | `user_id` | INTEGER | Reference to the user who owns this session | FOREIGN KEY, NOT NULL |
-| `title` | VARCHAR(500) | Session title/description | NULLABLE |
+| `title` | VARCHAR(255) | Session title/description | NULLABLE |
 | `created_at` | TIMESTAMP WITH TIME ZONE | Session creation timestamp | DEFAULT CURRENT_TIMESTAMP |
 | `updated_at` | TIMESTAMP WITH TIME ZONE | Last update timestamp | DEFAULT CURRENT_TIMESTAMP |
 | `is_active` | BOOLEAN | Whether the session is active | DEFAULT TRUE |
-| `metadata` | JSONB | Additional session metadata | DEFAULT '{}' |
 
 ### Chat Messages Table
 
@@ -134,22 +132,19 @@ Stores individual messages within chat sessions.
 ```sql
 CREATE TABLE chat_messages (
     id SERIAL PRIMARY KEY,
-    uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+    uuid VARCHAR(36) UNIQUE NOT NULL,
     session_id INTEGER NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
+    message_type VARCHAR(20) NOT NULL CHECK (message_type IN ('user', 'assistant', 'system')),
     content TEXT NOT NULL,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    metadata JSONB DEFAULT '{}',
-    tokens_used INTEGER DEFAULT 0,
-    processing_time_ms INTEGER DEFAULT 0
+    metadata TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes
 CREATE INDEX idx_chat_messages_session_id ON chat_messages(session_id);
 CREATE INDEX idx_chat_messages_uuid ON chat_messages(uuid);
 CREATE INDEX idx_chat_messages_created_at ON chat_messages(created_at);
-CREATE INDEX idx_chat_messages_role ON chat_messages(role);
-CREATE INDEX idx_chat_messages_metadata ON chat_messages USING GIN(metadata);
+CREATE INDEX idx_chat_messages_message_type ON chat_messages(message_type);
 ```
 
 #### Column Descriptions
@@ -157,14 +152,12 @@ CREATE INDEX idx_chat_messages_metadata ON chat_messages USING GIN(metadata);
 | Column | Type | Description | Constraints |
 |--------|------|-------------|-------------|
 | `id` | SERIAL | Primary key, auto-incrementing | PRIMARY KEY |
-| `uuid` | UUID | Unique identifier for external references | UNIQUE, NOT NULL |
+| `uuid` | VARCHAR(36) | Unique identifier for external references | UNIQUE, NOT NULL |
 | `session_id` | INTEGER | Reference to the chat session | FOREIGN KEY, NOT NULL |
+| `message_type` | VARCHAR(20) | Message type (user, assistant, system) | CHECK constraint |
 | `content` | TEXT | Message content | NOT NULL |
-| `role` | VARCHAR(20) | Message role (user, assistant, system) | CHECK constraint |
+| `metadata` | TEXT | Additional message metadata as JSON string | NULLABLE |
 | `created_at` | TIMESTAMP WITH TIME ZONE | Message creation timestamp | DEFAULT CURRENT_TIMESTAMP |
-| `metadata` | JSONB | Additional message metadata | DEFAULT '{}' |
-| `tokens_used` | INTEGER | Number of tokens used for this message | DEFAULT 0 |
-| `processing_time_ms` | INTEGER | Processing time in milliseconds | DEFAULT 0 |
 
 ## Relationships
 

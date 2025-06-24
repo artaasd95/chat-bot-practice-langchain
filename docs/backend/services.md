@@ -20,6 +20,8 @@ This document provides comprehensive documentation for the backend services in t
 The backend services layer provides core business logic and external integrations for the Chat Bot System. This layer is responsible for:
 
 - **LLM Integration**: Managing language model interactions
+- **API Tools Service**: Handling REST API tool calling functionality
+- **History Service**: Managing conversation history and context
 - **Webhook Processing**: Handling asynchronous notifications
 - **Request Tracking**: Monitoring and tracking request lifecycle
 - **External API Integration**: Connecting with third-party services
@@ -27,20 +29,189 @@ The backend services layer provides core business logic and external integration
 ### Service Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   API Layer     │    │   API Layer     │    │   API Layer     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   LLM Service   │    │ Webhook Service │    │ Tracking Service│
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   OpenAI API    │    │ External APIs   │    │  Memory Store   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   API Layer     │    │   API Layer     │    │   API Layer     │    │   API Layer     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │                       │
+         ▼                       ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   LLM Service   │    │ API Tools       │    │ History Service │    │ Webhook Service │
+└─────────────────┘    │ Service         │    └─────────────────┘    └─────────────────┘
+         │              └─────────────────┘             │                       │
+         ▼                       │                       ▼                       ▼
+┌─────────────────┐              ▼              ┌─────────────────┐    ┌─────────────────┐
+│   OpenAI API    │    ┌─────────────────┐    │   PostgreSQL    │    │ External APIs   │
+└─────────────────┘    │ External APIs   │    │   Database      │    └─────────────────┘
+                        └─────────────────┘    └─────────────────┘
 ```
+
+## API Tools Service
+
+### Overview
+
+The API Tools Service (`app/services/api_tools.py`) provides REST API tool calling functionality, enabling the LLM to make external API calls and integrate the results into conversations.
+
+### Key Features
+
+- **API Request Parsing**: Extracts API call requests from LLM responses
+- **HTTP Client**: Asynchronous HTTP requests using aiohttp
+- **Response Integration**: Incorporates API results back into conversation flow
+- **Error Handling**: Graceful handling of API failures and timeouts
+- **Request Validation**: Validates API requests before execution
+
+### Service Implementation
+
+#### API Request Models
+
+```python
+class APIRequest(BaseModel):
+    """Model for API request data."""
+    url: str
+    method: str = "GET"
+    headers: Optional[Dict[str, str]] = None
+    params: Optional[Dict[str, Any]] = None
+    data: Optional[Dict[str, Any]] = None
+    timeout: int = 30
+
+class APIResponse(BaseModel):
+    """Model for API response data."""
+    status_code: int
+    data: Optional[Dict[str, Any]] = None
+    text: Optional[str] = None
+    error: Optional[str] = None
+    execution_time: float
+```
+
+#### API Tools Service Class
+
+```python
+class APIToolsService:
+    """Service for making API calls from LLM responses."""
+    
+    def __init__(self):
+        self.session = None
+    
+    async def make_api_call(self, request: APIRequest) -> APIResponse:
+        """Make an API call and return the response."""
+        start_time = time.time()
+        
+        try:
+            if not self.session:
+                self.session = aiohttp.ClientSession()
+            
+            async with self.session.request(
+                method=request.method,
+                url=request.url,
+                headers=request.headers,
+                params=request.params,
+                json=request.data,
+                timeout=aiohttp.ClientTimeout(total=request.timeout)
+            ) as response:
+                execution_time = time.time() - start_time
+                
+                if response.content_type == 'application/json':
+                    data = await response.json()
+                    return APIResponse(
+                        status_code=response.status,
+                        data=data,
+                        execution_time=execution_time
+                    )
+                else:
+                    text = await response.text()
+                    return APIResponse(
+                        status_code=response.status,
+                        text=text,
+                        execution_time=execution_time
+                    )
+        except Exception as e:
+            execution_time = time.time() - start_time
+            return APIResponse(
+                status_code=0,
+                error=str(e),
+                execution_time=execution_time
+            )
+```
+
+#### Utility Functions
+
+```python
+def parse_api_request_from_text(text: str) -> Optional[APIRequest]:
+    """Parse API request from LLM response text."""
+    # Implementation for parsing API calls from text
+    
+def should_make_api_call(text: str) -> bool:
+    """Check if the text contains an API call request."""
+    # Implementation for detecting API calls
+```
+
+## History Service
+
+### Overview
+
+The History Service (`app/services/history.py`) manages conversation history, providing persistent storage and intelligent context loading for enhanced chat experiences.
+
+### Key Features
+
+- **Conversation Persistence**: Automatic saving of all chat messages
+- **Context Loading**: Intelligent retrieval of relevant conversation history
+- **Session Management**: Maintains conversation continuity across sessions
+- **History Summarization**: Efficient context management for long conversations
+- **Database Integration**: Seamless integration with PostgreSQL database
+
+### Service Implementation
+
+#### Core Functions
+
+```python
+async def load_conversation_history(
+    session_id: str, 
+    db: Session, 
+    limit: int = 10
+) -> List[Dict[str, Any]]:
+    """Load conversation history for a session."""
+    
+async def save_human_message(
+    session_id: str, 
+    message: str, 
+    db: Session, 
+    user_id: Optional[str] = None
+) -> ChatMessage:
+    """Save a human message to the conversation history."""
+    
+async def save_ai_message(
+    session_id: str, 
+    message: str, 
+    db: Session, 
+    metadata: Optional[Dict[str, Any]] = None
+) -> ChatMessage:
+    """Save an AI message to the conversation history."""
+    
+async def save_system_message(
+    session_id: str, 
+    message: str, 
+    db: Session
+) -> ChatMessage:
+    """Save a system message to the conversation history."""
+    
+async def summarize_conversation(
+    session_id: str, 
+    db: Session
+) -> Optional[str]:
+    """Summarize a conversation for context management."""
+    
+def format_history_for_llm(
+    history: List[Dict[str, Any]]
+) -> List[BaseMessage]:
+    """Format conversation history for LLM context."""
+```
+
+#### Database Models Integration
+
+The History Service integrates with the following database models:
+
+- **ChatSession**: Represents a conversation session
+- **ChatMessage**: Individual messages within a session
+- **User**: User information for message attribution
 
 ## LLM Service
 

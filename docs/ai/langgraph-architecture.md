@@ -37,25 +37,52 @@ The Chat Bot System uses LangGraph to create a sophisticated conversation flow t
 
 ## Graph Architecture
 
-### Basic Graph Structure
+### Graph Structure
 
-The system implements three main graph types:
+The system implements four main graph types:
 
 1. **Basic Graph**: Simple linear flow for standard conversations
 2. **Advanced Graph**: Extensible graph with additional custom nodes
 3. **Conditional Graph**: Smart routing based on message content
+4. **Enhanced Graph**: Advanced graph with API tool calling and conversation history
 
-### Graph Flow Diagram
+### Enhanced Graph Flow Diagram
 
 ```
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐    ┌──────────────┐
-│ Entry Point │───▶│ Preprocess   │───▶│ Generate    │───▶│ Postprocess  │
-└─────────────┘    └──────────────┘    └─────────────┘    └──────────────┘
+┌─────────────┐    ┌──────────────┐    ┌──────────────┐    ┌─────────────┐
+│ Entry Point │───▶│ Load History │───▶│ Preprocess   │───▶│ Generate    │
+└─────────────┘    └──────────────┘    └──────────────┘    └─────────────┘
                                                                     │
                                                                     ▼
-                                                               ┌─────────┐
-                                                               │   END   │
-                                                               └─────────┘
+                                                            ┌──────────────┐
+                                                            │ Check API    │
+                                                            │ Call         │
+                                                            └──────────────┘
+                                                                    │
+                                                            ┌───────┴───────┐
+                                                            │               │
+                                                            ▼               ▼
+                                                    ┌──────────────┐ ┌──────────────┐
+                                                    │ Make API     │ │ Postprocess  │
+                                                    │ Call         │ │              │
+                                                    └──────────────┘ └──────────────┘
+                                                            │               │
+                                                            ▼               │
+                                                    ┌──────────────┐        │
+                                                    │ Postprocess  │        │
+                                                    │              │        │
+                                                    └──────────────┘        │
+                                                            │               │
+                                                            ▼               ▼
+                                                    ┌──────────────┐ ┌──────────────┐
+                                                    │ Save to      │ │ Save to      │
+                                                    │ History      │ │ History      │
+                                                    └──────────────┘ └──────────────┘
+                                                            │               │
+                                                            ▼               ▼
+                                                            ┌───────────────┐
+                                                            │      END      │
+                                                            └───────────────┘
 ```
 
 ### Conditional Graph Flow
@@ -93,9 +120,14 @@ The `GraphState` is a TypedDict that carries information between nodes:
 ```python
 class GraphState(TypedDict, total=False):
     """Type definition for the graph state."""
-    messages: List[BaseMessage]  # Conversation history
-    response: Optional[str]      # Generated response
-    metadata: Dict[str, Any]     # Additional metadata
+    messages: List[BaseMessage]     # Conversation history
+    response: Optional[str]         # Generated response
+    metadata: Dict[str, Any]        # Additional metadata
+    session_id: Optional[str]       # Conversation session ID
+    history: List[Dict[str, Any]]   # Loaded conversation history
+    api_request: Optional[APIRequest]   # API request to be made
+    api_response: Optional[APIResponse] # API response received
+    should_call_api: bool           # Whether to make an API call
 ```
 
 ### State Components
@@ -234,6 +266,95 @@ async def postprocess_output(state: GraphState) -> GraphState:
 - Content filtering rules
 - Response formatting templates
 
+### Enhanced Graph Nodes
+
+#### Load History Node
+```python
+def load_history_node(state: GraphState) -> GraphState:
+    """Load conversation history from database."""
+    if state.get("session_id"):
+        history_service = HistoryService()
+        history = history_service.get_conversation_history(state["session_id"])
+        state["history"] = history
+        state["metadata"]["history_loaded"] = True
+        state["metadata"]["messages_in_context"] = len(history)
+    return state
+```
+
+#### Check API Call Node
+```python
+def check_api_call_node(state: GraphState) -> GraphState:
+    """Determine if an API call should be made."""
+    response = state.get("response", "")
+    
+    # Check if response contains API call indicators
+    api_indicators = ["API_CALL:", "FETCH:", "GET:", "POST:"]
+    should_call_api = any(indicator in response for indicator in api_indicators)
+    
+    if should_call_api:
+        # Extract API request details
+        api_request = extract_api_request(response)
+        state["api_request"] = api_request
+        state["should_call_api"] = True
+    else:
+        state["should_call_api"] = False
+    
+    return state
+```
+
+#### Make API Call Node
+```python
+def make_api_call_node(state: GraphState) -> GraphState:
+    """Execute the API call."""
+    api_request = state.get("api_request")
+    
+    if api_request:
+        api_service = APIToolsService()
+        api_response = api_service.make_request(api_request)
+        state["api_response"] = api_response
+        
+        # Update metadata
+        state["metadata"]["api_calls_made"] = 1
+        state["metadata"]["api_call_details"] = {
+            "url": api_request.url,
+            "method": api_request.method,
+            "status_code": api_response.status_code,
+            "success": api_response.success
+        }
+    
+    return state
+```
+
+#### Save History Node
+```python
+def save_history_node(state: GraphState) -> GraphState:
+    """Save the conversation to database."""
+    session_id = state.get("session_id")
+    messages = state.get("messages", [])
+    response = state.get("response", "")
+    
+    if session_id:
+        history_service = HistoryService()
+        
+        # Save user message
+        if messages:
+            last_message = messages[-1]
+            history_service.save_message(
+                session_id=session_id,
+                message_type="user",
+                content=last_message.content
+            )
+        
+        # Save assistant response
+        history_service.save_message(
+            session_id=session_id,
+            message_type="assistant",
+            content=response
+        )
+    
+    return state
+```
+
 ### Help Flow Node (Conditional Graph)
 
 **Purpose**: Handles help and support requests with specialized responses
@@ -347,6 +468,86 @@ def router(state: GraphState) -> str:
         return "help_flow"
     else:
         return "generate"
+```
+
+### Enhanced Graph Builder
+
+**Purpose**: Creates an advanced graph with API tool calling and conversation history management
+
+**Usage**: Full-featured chat applications with external API integration and persistent conversations
+
+**Features**:
+- Automatic conversation history loading and saving
+- Dynamic API call detection and execution
+- Conditional routing based on API requirements
+- Enhanced state management with session tracking
+
+**Configuration**:
+```python
+async def build_enhanced_graph(
+    llm: BaseLLM,
+    history_service: HistoryService,
+    api_service: APIToolsService
+) -> StateGraph:
+    graph = StateGraph(GraphState)
+    
+    # Add enhanced nodes
+    graph.add_node("load_history", load_history_node)
+    graph.add_node("preprocess", preprocess_node)
+    graph.add_node("generate", generate_node)
+    graph.add_node("check_api_call", check_api_call_node)
+    graph.add_node("make_api_call", make_api_call_node)
+    graph.add_node("postprocess", postprocess_node)
+    graph.add_node("save_history", save_history_node)
+    
+    # Define enhanced routing
+    graph.add_edge("load_history", "preprocess")
+    graph.add_edge("preprocess", "generate")
+    graph.add_edge("generate", "check_api_call")
+    
+    # Conditional routing for API calls
+    graph.add_conditional_edges(
+        "check_api_call",
+        route_api_decision,
+        {
+            "make_api_call": "make_api_call",
+            "postprocess": "postprocess"
+        }
+    )
+    
+    graph.add_edge("make_api_call", "postprocess")
+    graph.add_edge("postprocess", "save_history")
+    graph.add_edge("save_history", END)
+    
+    # Set entry point
+    graph.set_entry_point("load_history")
+    
+    return await graph.compile()
+```
+
+**Enhanced Router Logic**:
+```python
+def route_api_decision(state: GraphState) -> str:
+    """Route based on API call requirement."""
+    should_call_api = state.get("should_call_api", False)
+    
+    if should_call_api:
+        return "make_api_call"
+    else:
+        return "postprocess"
+
+def route_with_error_handling(state: GraphState) -> str:
+    """Enhanced routing with error handling."""
+    try:
+        # Check for errors in previous nodes
+        if state.get("error"):
+            return "error_handler"
+        
+        # Normal routing logic
+        return route_api_decision(state)
+    except Exception as e:
+        logger.error(f"Routing error: {e}")
+        return "error_handler"
 ```
 
 ## LLM Integration
