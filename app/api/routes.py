@@ -32,40 +32,65 @@ async def chat(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ) -> ChatResponse:
-    """Direct chat endpoint - requires authentication."""
+    """Direct chat endpoint with enhanced graph features - requires authentication."""
     try:
         # Import here to avoid circular imports
-        from app.main import graph
+        from app.services.llm import get_llm
+        from app.graph.builder import build_enhanced_graph
+        from app.graph.nodes import GraphState
+        from langchain_core.messages import HumanMessage
+        import uuid
         
-        if graph is None:
-            raise HTTPException(status_code=500, detail="Graph not initialized")
+        # Get LLM and build enhanced graph
+        llm = get_llm()
+        graph = await build_enhanced_graph(llm)
         
-        # Prepare the input for the graph
-        graph_input = {
-            "messages": [{"role": "user", "content": request.message}],
-            "user_id": str(current_user.id),
-            "user_email": current_user.email
+        # Generate session ID if not provided
+        session_id = request.conversation_id or f"session_{current_user.id}_{uuid.uuid4().hex[:8]}"
+        
+        # Prepare the enhanced graph input
+        graph_input: GraphState = {
+            "messages": [HumanMessage(content=request.message)],
+            "response": None,
+            "metadata": {
+                "request_id": f"req_{uuid.uuid4().hex[:8]}",
+                "user_id": str(current_user.id),
+                "user_email": current_user.email
+            },
+            "session_id": session_id,
+            "history": [],
+            "api_request": None,
+            "api_response": None,
+            "should_call_api": False
         }
         
-        # Invoke the graph
+        # Invoke the enhanced graph
         result = await graph.ainvoke(graph_input)
         
         # Extract the response
-        if "messages" in result and result["messages"]:
-            response_message = result["messages"][-1]["content"]
-        else:
-            response_message = "I'm sorry, I couldn't process your request."
+        response_message = result.get("response", "I'm sorry, I couldn't process your request.")
         
-        # TODO: Save chat session and message to database
-        # This can be implemented later to store chat history
+        # Add API call information to response if applicable
+        api_info = {}
+        if result.get("should_call_api"):
+            api_info["api_called"] = True
+            api_response = result.get("api_response")
+            if api_response:
+                api_info["api_status"] = api_response.get("status_code")
+                api_info["api_success"] = api_response.get("success")
         
         return ChatResponse(
             response=response_message,
-            conversation_id=request.conversation_id or f"conv_{current_user.id}_{request.message[:10]}"
+            conversation_id=session_id,
+            request_id=uuid.uuid4(),
+            metadata={
+                "history_loaded": len(result.get("history", [])),
+                "api_info": api_info
+            }
         )
         
     except Exception as e:
-        logger.error(f"Error in chat endpoint: {str(e)}")
+        logger.error(f"Error in enhanced chat endpoint: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 

@@ -4,7 +4,10 @@ A scalable asynchronous chat system built with LangGraph and FastAPI, featuring 
 
 ## Features
 
-- **Multiple LLM Providers**: Support for OpenAI and DeepSeek APIs with automatic provider detection
+- Multiple LLM Providers: Support for OpenAI and DeepSeek APIs with automatic provider detection
+- Enhanced Graph Architecture: Advanced conversation flow with history management and API tool calling
+- REST API Tools: LLM can make external API calls during conversations with conditional routing
+- Conversation History: Automatic loading and saving of conversation context across sessions
 - **Asynchronous Processing**: Fully async implementation for high throughput
 - **Dual Response Modes**:
   - Direct API responses for immediate results

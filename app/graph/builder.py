@@ -1,9 +1,19 @@
-from typing import Dict, Any, Optional, List, Callable, Awaitable
+from typing import Dict, Callable, Awaitable
 from langchain_core.language_models import BaseLLM
+from langchain_core.messages import AIMessage
 from langgraph.graph import StateGraph, END
 from loguru import logger
 
-from app.graph.nodes import GraphState, generate_response, preprocess_input, postprocess_output
+from app.graph.nodes import (
+    GraphState, 
+    generate_response, 
+    preprocess_input, 
+    postprocess_output,
+    load_conversation_history,
+    check_for_api_call,
+    make_api_call,
+    save_to_history
+)
 
 
 async def build_graph(llm: BaseLLM) -> StateGraph:
@@ -164,5 +174,79 @@ async def build_conditional_graph(llm: BaseLLM) -> StateGraph:
     # Compile the graph
     compiled_graph = await graph.compile()
     logger.info("Conditional chat graph built successfully")
+    
+    return compiled_graph
+
+
+async def build_enhanced_graph(llm: BaseLLM) -> StateGraph:
+    """Build an enhanced chat graph with history management and API tool calling.
+    
+    This graph includes:
+    - Conversation history loading at the start
+    - LLM response generation
+    - Conditional routing for API calls
+    - API execution when requested
+    - History saving at the end
+    
+    Args:
+        llm: The language model to use.
+        
+    Returns:
+        The compiled enhanced chat graph.
+    """
+    logger.info("Building enhanced chat graph with history and API tools")
+    
+    # Define the graph
+    graph = StateGraph(GraphState)
+    
+    # Add nodes
+    async def generate_with_llm(state: GraphState) -> GraphState:
+        return await generate_response(state, llm)
+    
+    graph.add_node("load_history", load_conversation_history)
+    graph.add_node("preprocess", preprocess_input)
+    graph.add_node("generate", generate_with_llm)
+    graph.add_node("check_api", check_for_api_call)
+    graph.add_node("make_api_call", make_api_call)
+    graph.add_node("postprocess", postprocess_output)
+    graph.add_node("save_history", save_to_history)
+    
+    # Define conditional router for API calls
+    def api_router(state: GraphState) -> str:
+        """Route based on whether an API call is needed."""
+        should_call_api = state.get("should_call_api", False)
+        if should_call_api:
+            logger.info("Routing to API call")
+            return "make_api_call"
+        else:
+            logger.info("Routing to postprocess")
+            return "postprocess"
+    
+    # Define the edges
+    graph.add_edge("load_history", "preprocess")
+    graph.add_edge("preprocess", "generate")
+    graph.add_edge("generate", "check_api")
+    
+    # Conditional routing after checking for API calls
+    graph.add_conditional_edges(
+        "check_api",
+        api_router,
+        {
+            "make_api_call": "make_api_call",
+            "postprocess": "postprocess"
+        }
+    )
+    
+    # Continue flow after API call
+    graph.add_edge("make_api_call", "postprocess")
+    graph.add_edge("postprocess", "save_history")
+    graph.add_edge("save_history", END)
+    
+    # Set the entry point
+    graph.set_entry_point("load_history")
+    
+    # Compile the graph
+    compiled_graph = await graph.compile()
+    logger.info("Enhanced chat graph built successfully")
     
     return compiled_graph

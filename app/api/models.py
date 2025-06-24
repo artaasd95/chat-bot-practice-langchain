@@ -7,6 +7,7 @@ from datetime import datetime
 class ChatRequest(BaseModel):
     """Chat request model."""
     message: str = Field(..., description="The message to process")
+    conversation_id: Optional[str] = Field(default=None, description="Conversation session ID")
     metadata: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Additional metadata for the request"
@@ -16,6 +17,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     """Chat response model."""
     response: str = Field(..., description="The generated response")
+    conversation_id: Optional[str] = Field(default=None, description="Conversation session ID")
     request_id: UUID = Field(..., description="Unique identifier for the request")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Response timestamp")
     metadata: Optional[Dict[str, Any]] = Field(
