@@ -10,9 +10,9 @@ import RegisterView from '@/views/Auth/RegisterView.vue'
 import ForgotPasswordView from '@/views/Auth/ForgotPasswordView.vue'
 
 // Dashboard pages
-import DashboardView from '@/views/Dashboard/DashboardView.vue'
-import ChatView from '@/views/Chat/ChatView.vue'
-import ProfileView from '@/views/Profile/ProfileView.vue'
+import DashboardView from '@/views/DashboardView.vue'
+import ChatView from '@/views/ChatView.vue'
+import ProfileView from '@/views/ProfileView.vue'
 
 // Admin pages
 import AdminDashboard from '@/views/Admin/AdminDashboard.vue'

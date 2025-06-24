@@ -386,33 +386,33 @@
         </div>
       </div>
 
-    <!-- Delete Account Confirmation Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-        <div class="flex items-center mb-4">
-          <ExclamationTriangleIcon class="w-6 h-6 text-red-600 mr-3" />
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Account</h3>
-        </div>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
-          This action cannot be undone. This will permanently delete your account and all associated data.
-        </p>
-        <div class="flex justify-end space-x-3">
-          <button
-            @click="showDeleteModal = false"
-            class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-          >
-            Cancel
-          </button>
-          <button
-            @click="deleteAccount"
-            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
-          >
-            Delete Account
-          </button>
+      <!-- Delete Account Modal -->
+      <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+          <div class="flex items-center mb-4">
+            <ExclamationTriangleIcon class="w-6 h-6 text-red-600 mr-3" />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Account</h3>
+          </div>
+          <p class="text-gray-600 dark:text-gray-400 mb-6">
+            This action cannot be undone. This will permanently delete your account and all associated data.
+          </p>
+          <div class="flex justify-end space-x-3">
+            <button
+              @click="showDeleteModal = false"
+              class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              @click="deleteAccount"
+              class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+            >
+              Delete Account
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
@@ -420,7 +420,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
-import MainLayout from '@/components/Layout/MainLayout.vue'
+
 import {
   PencilIcon,
   LockClosedIcon,
