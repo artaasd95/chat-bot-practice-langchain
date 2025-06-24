@@ -4,6 +4,7 @@ A scalable asynchronous chat system built with LangGraph and FastAPI, featuring 
 
 ## Features
 
+- **Multiple LLM Providers**: Support for OpenAI and DeepSeek APIs with automatic provider detection
 - **Asynchronous Processing**: Fully async implementation for high throughput
 - **Dual Response Modes**:
   - Direct API responses for immediate results
@@ -47,7 +48,7 @@ A scalable asynchronous chat system built with LangGraph and FastAPI, featuring 
 ### Prerequisites
 
 - Python 3.9+
-- OpenAI API key (or other LLM provider)
+- OpenAI API key OR DeepSeek API key (or other LLM provider)
 
 ### Installation
 
@@ -81,11 +82,17 @@ A scalable asynchronous chat system built with LangGraph and FastAPI, featuring 
    # CORS Settings
    CORS_ALLOW_ORIGINS=http://localhost:3000,http://localhost:8080
    
-   # LLM Settings
-   OPENAI_API_KEY=your_openai_api_key
-   LLM_MODEL=gpt-3.5-turbo
+   # LLM Settings - Choose your provider
+   LLM_PROVIDER=openai  # or "deepseek" for DeepSeek API
+   LLM_MODEL=gpt-3.5-turbo  # or "deepseek-chat" for DeepSeek
    LLM_TEMPERATURE=0.7
-   LLM_MAX_RETRIES=3
+   LLM_MAX_TOKENS=1000
+   
+   # OpenAI Configuration
+   OPENAI_API_KEY=your_openai_api_key
+   
+   # DeepSeek Configuration (alternative to OpenAI)
+   DEEPSEEK_API_KEY=your_deepseek_api_key
    
    # Logging Settings
    LOG_LEVEL=INFO

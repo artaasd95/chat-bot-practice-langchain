@@ -27,8 +27,12 @@ class Settings(BaseSettings):
     
     # LLM Settings
     OPENAI_API_KEY: Optional[str] = None
+    DEEPSEEK_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
-    MODEL_NAME: str = "gpt-3.5-turbo"
+    LLM_MODEL: str = "gpt-3.5-turbo"
+    LLM_TEMPERATURE: float = 0.7
+    LLM_MAX_TOKENS: Optional[int] = None
+    LLM_PROVIDER: str = "openai"  # openai, deepseek, anthropic
     
     # Logging
     LOG_LEVEL: str = "INFO"
