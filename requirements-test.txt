@@ -1,0 +1,96 @@
+# Testing Dependencies
+# This file contains all dependencies required for running tests
+
+# Core testing framework
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.0
+pytest-mock>=3.11.0
+pytest-timeout>=2.1.0
+pytest-html>=3.2.0
+pytest-json-report>=1.5.0
+
+# HTTP testing
+httpx>=0.24.0
+requests>=2.31.0
+
+# Test data generation
+faker>=19.0.0
+factory-boy>=3.3.0
+
+# Mocking and fixtures
+responses>=0.23.0
+requests-mock>=1.11.0
+
+# Database testing
+sqlalchemy-utils>=0.41.0
+alembic>=1.11.0
+
+# Performance testing
+pytest-benchmark>=4.0.0
+memory-profiler>=0.61.0
+
+# Code quality and linting (for CI/CD)
+flake8>=6.0.0
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.5.0
+
+# Coverage reporting
+coverage[toml]>=7.2.0
+coveragepy-lcov>=0.1.2
+
+# Security testing
+bandit>=1.7.5
+safety>=2.3.0
+
+# Documentation testing
+doctest>=1.0.0
+
+# Load testing (optional)
+locust>=2.15.0
+
+# API testing
+tavern>=2.0.0
+
+# Snapshot testing
+syrupy>=4.0.0
+
+# Property-based testing
+hypothesis>=6.82.0
+
+# Time manipulation for tests
+freezegun>=1.2.0
+
+# Environment management
+python-dotenv>=1.0.0
+
+# Async testing utilities
+aioresponses>=0.7.4
+aiofiles>=23.0.0
+
+# WebSocket testing
+websockets>=11.0.0
+pytest-websocket>=0.1.0
+
+# Redis testing
+fakeredis>=2.18.0
+
+# File system testing
+pyfakefs>=5.2.0
+
+# Logging testing
+testfixtures>=7.2.0
+
+# Parallel testing
+pytest-parallel>=0.1.1
+
+# Test reporting
+allure-pytest>=2.13.0
+pytest-clarity>=1.0.1
+
+# Development dependencies
+ipdb>=0.13.13
+pytest-sugar>=0.9.7
+pytest-picked>=0.4.6
