@@ -90,7 +90,7 @@ A scalable asynchronous chat system built with LangGraph and FastAPI, featuring 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/chat-bot-practice-langchain.git
+   git clone https://github.com/artaasd95/chat-bot-practice-langchain.git
    cd chat-bot-practice-langchain
    ```
 
