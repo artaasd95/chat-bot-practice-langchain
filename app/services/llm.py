@@ -6,6 +6,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from loguru import logger
 
 from app.config import settings
+from app.utils.monitoring import track_llm_usage
 
 try:
     from langchain_deepseek import ChatDeepSeek
@@ -84,6 +85,7 @@ def _determine_provider() -> str:
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+@track_llm_usage
 async def generate_llm_response(
     llm: BaseLLM,
     messages: List[BaseMessage],

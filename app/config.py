@@ -1,5 +1,5 @@
 from pydantic import BaseSettings
-from typing import Optional
+from typing import Optional, Dict, Any, List
 
 
 class Settings(BaseSettings):
@@ -40,6 +40,23 @@ class Settings(BaseSettings):
     # Webhook Settings
     WEBHOOK_SECRET: Optional[str] = None
     WEBHOOK_TIMEOUT: int = 30
+    
+    # LangSmith Settings
+    LANGCHAIN_TRACING_V2: bool = False
+    LANGCHAIN_API_KEY: Optional[str] = None
+    LANGCHAIN_PROJECT: str = "chatbot-microservices"
+    LANGCHAIN_ENDPOINT: str = "https://api.smith.langchain.com"
+    
+    # Monitoring Settings
+    METRICS_ENABLED: bool = False
+    METRICS_PORT: int = 9090
+    METRICS_PATH: str = "/metrics"
+    HEALTH_CHECK_ENABLED: bool = True
+    HEALTH_CHECK_PATH: str = "/health"
+    HEALTH_CHECK_INTERVAL: int = 30
+    TRACING_ENABLED: bool = False
+    TRACING_ENDPOINT: Optional[str] = None
+    TRACING_SERVICE_NAME: str = "chat-bot-api"
     
     class Config:
         env_file = ".env"

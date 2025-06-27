@@ -187,10 +187,49 @@ docker-compose logs -f admin
 ```
 
 ### Monitoring
-Consider adding monitoring tools:
-- Prometheus for metrics
-- Grafana for dashboards
-- ELK stack for log aggregation
+The system includes comprehensive monitoring tools:
+
+#### Metrics Collection
+- **Prometheus**: Collects and stores metrics from all services
+  - LLM usage metrics (requests, latency, tokens)
+  - API metrics (requests, latency, status codes)
+  - Graph execution metrics (node execution times, success rates)
+  - System metrics (active users, conversations)
+
+#### Visualization
+- **Grafana**: Provides dashboards for monitoring system performance
+  - LLM Monitoring Dashboard: Shows LLM usage, latency, and error rates
+  - API Dashboard: Tracks API performance and usage patterns
+  - System Dashboard: Monitors overall system health
+
+#### LangSmith Integration
+- **LangSmith**: Provides comprehensive tracing, monitoring, and evaluation for LangChain and LangGraph components
+  - **Tracing Implementation**:
+    - Automatically traces all LLM calls via the `track_llm_usage` decorator
+    - Captures all LangGraph node executions with the `track_graph_node` decorator
+    - Records inputs, outputs, and execution times for each component
+    - Maintains parent-child relationships between graph nodes and LLM calls
+  
+  - **Monitoring Capabilities**:
+    - Real-time dashboards showing LLM usage patterns and performance
+    - Token usage tracking by model and request type
+    - Cost analysis tools to optimize LLM spending
+    - Performance metrics for each graph node and LLM call
+    - Anomaly detection for identifying unusual patterns
+  
+  - **Debugging Features**:
+    - Interactive visualization of LangGraph execution paths
+    - Detailed inspection of state at each node in the graph
+    - Error tracing with full context of failures
+    - Comparison tools to identify differences between runs
+    - Replay functionality to reproduce issues
+  
+  - **Evaluation Tools**:
+    - A/B testing framework for comparing different models and prompts
+    - Custom evaluation metrics for assessing response quality
+    - Automated testing against ground truth datasets
+    - User feedback integration for continuous improvement
+    - Historical performance tracking over time
 
 ## Security
 

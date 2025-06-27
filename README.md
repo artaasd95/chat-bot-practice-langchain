@@ -20,6 +20,7 @@ A scalable asynchronous chat system built with LangGraph and FastAPI, featuring 
 - **Conditional Graph Routing**: Smart routing based on content analysis and API requirements
 - **Database Integration**: PostgreSQL support for conversation history and session management
 - **Enhanced State Management**: Rich state tracking with metadata and API call details
+- **LangSmith Integration**: Comprehensive tracing, monitoring, debugging, and evaluation of LLM applications
 
 ### Architecture Features
 - **Scalable Architecture**:
@@ -59,12 +60,15 @@ A scalable asynchronous chat system built with LangGraph and FastAPI, featuring 
 │   └── utils/             # Utility modules
 │       ├── __init__.py
 │       ├── logging.py     # Logging configuration
+│       ├── monitoring.py  # Monitoring and LangSmith integration
 │       └── tracking.py    # Request tracking utilities
 ├── docs/                  # Documentation
 │   ├── api/              # API documentation
 │   │   └── chat-api.md   # Chat API endpoints and models
 │   ├── ai/               # AI/LangGraph documentation
-│   │   └── langgraph-architecture.md  # Graph architecture guide
+│   │   ├── langgraph-architecture.md  # Graph architecture guide
+│   │   ├── langsmith-integration.md   # LangSmith integration guide
+│   │   └── deepseek-integration.md    # DeepSeek integration guide
 │   ├── backend/          # Backend documentation
 │   │   ├── architecture.md  # System architecture
 │   │   └── services.md   # Services documentation
@@ -273,6 +277,8 @@ Comprehensive documentation is available in the `docs/` directory:
 - **Services Documentation**: In-depth service descriptions and implementations
 - **Database Schema**: Database models and relationships
 - **LangGraph Architecture**: Graph design patterns and node implementations
+- **LangSmith Integration**: Comprehensive guide for tracing, monitoring, debugging, and evaluating LLM applications
+- **DeepSeek Integration**: Guide for using DeepSeek models as an alternative LLM provider
 
 ## License
 

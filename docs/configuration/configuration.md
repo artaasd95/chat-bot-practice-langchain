@@ -181,10 +181,42 @@ HEALTH_CHECK_PATH="/health"
 HEALTH_CHECK_INTERVAL=30
 
 # Tracing Settings
-TRACING_ENABLED=false
+TRACING_ENABLED=true
 TRACING_ENDPOINT="http://jaeger:14268/api/traces"
 TRACING_SERVICE_NAME="chat-bot-api"
+
+# LangSmith Settings
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_API_KEY=your-langsmith-api-key
+LANGCHAIN_PROJECT=chatbot-microservices
+LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
 ```
+
+#### LangSmith Configuration
+LangSmith provides comprehensive tracing, monitoring, and evaluation for LangChain and LangGraph components:
+
+- **LANGCHAIN_TRACING_V2**: Enable LangSmith tracing (true/false)
+- **LANGCHAIN_API_KEY**: Your LangSmith API key (obtain from [LangSmith](https://smith.langchain.com))
+- **LANGCHAIN_PROJECT**: Project name in LangSmith for organizing traces
+- **LANGCHAIN_ENDPOINT**: LangSmith API endpoint (defaults to https://api.smith.langchain.com)
+
+##### Benefits of LangSmith Integration
+
+- **Tracing**: Visualize and debug LangGraph execution paths with detailed node-by-node analysis
+- **Monitoring**: Track token usage, costs, and performance metrics across all LLM interactions
+- **Debugging**: Identify bottlenecks, errors, and optimization opportunities in LLM interactions
+- **Evaluation**: Compare different models, prompts, and graph configurations for quality and efficiency
+- **Cost Analysis**: Monitor token usage and associated costs to optimize spending
+- **A/B Testing**: Test different LLM configurations and graph structures side by side
+
+LangSmith integration enables:
+- **Detailed Visualization**: See the exact flow of data through your LangGraph nodes
+- **Token Usage Tracking**: Monitor prompt and completion tokens for each LLM call
+- **Performance Metrics**: Measure latency and throughput of each component
+- **Error Analysis**: Quickly identify and debug failures in your LLM applications
+- **Quality Assessment**: Evaluate LLM responses against ground truth or custom criteria
+- **Historical Data**: Maintain a searchable history of all LLM interactions for analysis
+- **Collaborative Development**: Share traces and evaluations with team members
 
 ## Configuration Files
 

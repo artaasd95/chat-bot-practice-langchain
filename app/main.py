@@ -9,6 +9,7 @@ from app.auth.routes import router as auth_router
 from app.admin.routes import router as admin_router
 from app.core.graph import build_graph
 from app.database.database import init_db
+from app.utils.monitoring import setup_monitoring
 
 # Configure logging
 logging.basicConfig(
@@ -26,6 +27,14 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
     # Startup
     logger.info("Starting up the application...")
+    
+    # Initialize monitoring
+    try:
+        setup_monitoring()
+        logger.info("Monitoring system initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize monitoring: {e}")
+        logger.warning("Continuing without monitoring...")
     
     # Initialize database
     try:

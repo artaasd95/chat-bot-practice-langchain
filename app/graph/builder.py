@@ -4,6 +4,8 @@ from langchain_core.messages import AIMessage
 from langgraph.graph import StateGraph, END
 from loguru import logger
 
+from app.utils.monitoring import track_graph_node
+
 from app.graph.nodes import (
     GraphState, 
     generate_response, 

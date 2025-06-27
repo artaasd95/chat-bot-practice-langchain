@@ -7,6 +7,10 @@ A comprehensive documentation for the LangGraph-based Chat Bot System with micro
 - [Project Overview](#project-overview)
 - [Architecture](#architecture)
 - [Services](#services)
+- [AI Integration](#ai-integration)
+  - [LangGraph Architecture](#langgraph-architecture)
+  - [LangSmith Integration](#langsmith-integration)
+  - [DeepSeek Integration](#deepseek-integration)
 - [Frontend Application](#frontend-application)
 - [Database Schema](#database-schema)
 - [API Documentation](#api-documentation)
@@ -32,6 +36,7 @@ The Chat Bot System is a scalable, microservices-based application built with Fa
 #### Backend
 - **FastAPI**: Modern, fast web framework for building APIs
 - **LangGraph**: Framework for building stateful, multi-actor applications with LLMs
+- **LangSmith**: Platform for debugging, testing, evaluating, and monitoring LLM applications
 - **SQLAlchemy**: SQL toolkit and Object-Relational Mapping (ORM)
 - **PostgreSQL**: Primary database for data persistence
 - **Redis**: Caching and session management
@@ -139,6 +144,42 @@ The system follows a microservices architecture pattern with the following compo
 - `PUT /admin/users/{id}` - Update user
 - `GET /admin/chats` - Monitor chat sessions
 - `GET /admin/analytics` - System analytics
+
+## AI Integration
+
+The system leverages advanced AI technologies to power its conversational capabilities:
+
+### LangGraph Architecture
+
+The chat system uses LangGraph to create a stateful, multi-actor conversation flow with the following features:
+
+- **Enhanced Graph Structure**: Advanced conversation routing with conditional paths
+- **State Management**: Persistent conversation state across messages
+- **Tool Integration**: Seamless integration with external API tools
+- **Context Management**: Automatic handling of conversation history and context
+
+For detailed information, see [LangGraph Architecture](./ai/langgraph-architecture.md).
+
+### LangSmith Integration
+
+LangSmith is integrated for comprehensive monitoring, debugging, and evaluation of LLM applications:
+
+- **Tracing**: Automatic tracing of LLM calls and graph node executions
+- **Monitoring**: Real-time dashboards for token usage, costs, and performance metrics
+- **Debugging**: Interactive visualization of execution paths and error tracing
+- **Evaluation**: Tools for A/B testing, quality assessment, and model comparison
+
+For detailed information, see [LangSmith Integration](./ai/langsmith-integration.md).
+
+### DeepSeek Integration
+
+In addition to standard LLM providers, the system supports DeepSeek models:
+
+- **Multiple Model Support**: Integration with various DeepSeek models
+- **Automatic Provider Detection**: Seamless switching between LLM providers
+- **Performance Optimization**: Tuned parameters for optimal response quality
+
+For detailed information, see [DeepSeek Integration](./ai/deepseek-integration.md).
 
 ## Frontend Application
 

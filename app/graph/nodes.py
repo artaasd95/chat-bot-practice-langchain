@@ -7,6 +7,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.utils.monitoring import track_graph_node
 from app.services.api_tools import (
     get_api_service, 
     parse_api_request_from_text, 
@@ -31,6 +32,7 @@ class GraphState(TypedDict, total=False):
     should_call_api: bool
 
 
+@track_graph_node
 async def generate_response(state: GraphState, llm: BaseLLM) -> GraphState:
     """Generate a response using the LLM.
     
@@ -75,6 +77,7 @@ async def generate_response(state: GraphState, llm: BaseLLM) -> GraphState:
         raise
 
 
+@track_graph_node
 async def preprocess_input(state: GraphState) -> GraphState:
     """Preprocess the input messages.
     
@@ -113,6 +116,7 @@ async def preprocess_input(state: GraphState) -> GraphState:
     return {**state, "messages": processed_messages}
 
 
+@track_graph_node
 async def postprocess_output(state: GraphState) -> GraphState:
     """Post-process the output.
     
@@ -130,6 +134,7 @@ async def postprocess_output(state: GraphState) -> GraphState:
     return state
 
 
+@track_graph_node
 async def load_conversation_history(state: GraphState) -> GraphState:
     """Load conversation history for the session.
     
@@ -176,6 +181,7 @@ async def load_conversation_history(state: GraphState) -> GraphState:
     return state
 
 
+@track_graph_node
 async def check_for_api_call(state: GraphState) -> GraphState:
     """Check if the LLM response contains an API call request.
     
