@@ -9,8 +9,9 @@ os.environ['SERVICE_NAME'] = 'chat'
 
 from app.config import settings
 from app.api.routes import router as api_router
-from app.graph.graph import build_graph
+from app.graph.builder import build_graph
 from app.database.database import get_db_engine
+from app.services.llm import get_llm
 
 # Configure logging
 logging.basicConfig(
@@ -37,10 +38,18 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to connect to database: {e}")
         raise
     
+    # Initialize LLM
+    try:
+        llm = get_llm()
+        logger.info("LLM initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize LLM: {e}")
+        raise
+    
     # Build graph
     global graph
     try:
-        graph = build_graph()
+        graph = await build_graph(llm)
         logger.info("Graph built successfully")
     except Exception as e:
         logger.error(f"Failed to build graph: {e}")
