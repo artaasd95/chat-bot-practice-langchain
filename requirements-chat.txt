@@ -3,7 +3,7 @@
 
 # LangChain and AI dependencies
 langchain==0.0.350
-langchain-community==0.0.1
+langchain-community>=0.0.2
 langchain-openai==0.0.2
 langchain-deepseek>=0.1.0
 aiohttp>=3.8.0
