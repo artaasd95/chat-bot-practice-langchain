@@ -96,3 +96,4 @@ pytest-sugar>=0.9.7
 pytest-picked>=0.4.6
 
 loguru>=0.7.0
+langgraph>=0.5.0
