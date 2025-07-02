@@ -93,3 +93,15 @@ async def health_check():
         "version": settings.VERSION,
         "graph_ready": graph is not None
     }
+
+
+@app.get("/metrics")
+async def metrics():
+    """Basic metrics endpoint for Prometheus."""
+    return {
+        "service": "chat",
+        "status": "running",
+        "version": settings.VERSION,
+        "graph_ready": graph is not None,
+        "uptime": "running"
+    }

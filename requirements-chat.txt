@@ -12,3 +12,4 @@ langsmith>=0.0.69
 
 # Additional chat-specific dependencies
 websockets==12.0
+loguru>=0.7.0

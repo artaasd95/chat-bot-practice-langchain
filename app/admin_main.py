@@ -79,3 +79,14 @@ async def health_check():
         "status": "healthy",
         "version": settings.VERSION
     }
+
+
+@app.get("/metrics")
+async def metrics():
+    """Basic metrics endpoint for Prometheus."""
+    return {
+        "service": "admin",
+        "status": "running",
+        "version": settings.VERSION,
+        "uptime": "running"
+    }
