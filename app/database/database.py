@@ -1,12 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declarative_base
 import logging
 import os
 
 from app.config import settings
-
-# Create declarative base
-Base = declarative_base()
+from app.database.base import Base
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +58,8 @@ async def init_db():
         logger.info(f"Skipping database initialization in {service_name} service")
         return
     
-    from app.database.models import User
+    # Import all models before creating tables
+    from app.database.models import User, ChatSession, ChatMessage
     from app.auth.utils import get_password_hash
     
     engine = get_db_engine()

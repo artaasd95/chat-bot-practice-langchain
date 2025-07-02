@@ -11,7 +11,8 @@ import tempfile
 import os
 from unittest.mock import AsyncMock, MagicMock
 
-from app.database.database import get_db, Base
+from app.database.database import get_db
+from app.database.base import Base
 from app.database.models import User, ChatSession, ChatMessage
 from app.config import settings
 from app.main import app
