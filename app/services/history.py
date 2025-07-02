@@ -104,7 +104,7 @@ class HistoryService:
                 session_id=session_id,
                 content=content,
                 message_type=message_type,
-                metadata=metadata or {}
+                message_metadata=metadata or {}
             )
             
             self.db.add(message)

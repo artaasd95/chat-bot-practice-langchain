@@ -228,7 +228,7 @@ class TestChatCrud:
             "session_id": test_chat_session.id,
             "message_type": "assistant",
             "content": "AI response with metadata",
-            "metadata": {
+            "message_metadata": {
                 "model": "gpt-4",
                 "tokens_used": 150,
                 "response_time": 2.5
@@ -237,9 +237,9 @@ class TestChatCrud:
         
         message = await crud.create_chat_message(test_db, message_data)
         
-        assert message.metadata == message_data["metadata"]
-        assert message.metadata["model"] == "gpt-4"
-        assert message.metadata["tokens_used"] == 150
+        assert message.message_metadata == message_data["message_metadata"]
+        assert message.message_metadata["model"] == "gpt-4"
+        assert message.message_metadata["tokens_used"] == 150
 
     async def test_get_chat_message_by_id(self, test_db: AsyncSession, test_chat_messages: list[ChatMessage]):
         """Test getting chat message by ID."""
@@ -327,14 +327,14 @@ class TestChatCrud:
         test_message = test_chat_messages[0]
         update_data = {
             "content": "Updated message content",
-            "metadata": {"edited": True, "edit_time": datetime.utcnow().isoformat()}
+            "message_metadata": {"edited": True, "edit_time": datetime.utcnow().isoformat()}
         }
         
         updated_message = await crud.update_chat_message(test_db, test_message.id, update_data)
         
         assert updated_message is not None
         assert updated_message.content == update_data["content"]
-        assert updated_message.metadata["edited"] is True
+        assert updated_message.message_metadata["edited"] is True
         assert updated_message.id == test_message.id
 
     async def test_update_chat_message_non_existing(self, test_db: AsyncSession):

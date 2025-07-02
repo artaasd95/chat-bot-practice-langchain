@@ -1,0 +1,1 @@
+"""Chat module for handling chat sessions and messages."""

@@ -58,7 +58,7 @@ class TestHistoryService:
                 message_type="human",
                 session_id=sample_session.id,
                 session=sample_session,
-                metadata={}
+                message_metadata={}
             ),
             ChatMessage(
                 id=2,
@@ -66,7 +66,7 @@ class TestHistoryService:
                 message_type="ai",
                 session_id=sample_session.id,
                 session=sample_session,
-                metadata={}
+                message_metadata={}
             ),
             ChatMessage(
                 id=3,
@@ -74,7 +74,7 @@ class TestHistoryService:
                 message_type="human",
                 session_id=sample_session.id,
                 session=sample_session,
-                metadata={}
+                message_metadata={}
             )
         ]
 
@@ -132,7 +132,7 @@ class TestHistoryService:
                 message_type="system",
                 session_id=session_id,
                 session=sample_session,
-                metadata={}
+                message_metadata={}
             ),
             ChatMessage(
                 id=2,
@@ -140,7 +140,7 @@ class TestHistoryService:
                 message_type="human",
                 session_id=session_id,
                 session=sample_session,
-                metadata={}
+                message_metadata={}
             ),
             ChatMessage(
                 id=3,
@@ -148,7 +148,7 @@ class TestHistoryService:
                 message_type="ai",
                 session_id=session_id,
                 session=sample_session,
-                metadata={}
+                message_metadata={}
             )
         ]
         
@@ -175,7 +175,7 @@ class TestHistoryService:
             message_type="human",
             session_id=session_id,
             session=sample_session,
-            metadata={
+            message_metadata={
                 "timestamp": "2024-01-01T00:00:00Z",
                 "user_agent": "ChatBot/1.0",
                 "ip_address": "192.168.1.1"
@@ -209,7 +209,7 @@ class TestHistoryService:
                 message_type="human",
                 session_id=session_id,
                 session=sample_session,
-                metadata={},
+                message_metadata={},
                 created_at=fake.date_time()
             ),
             ChatMessage(
@@ -218,7 +218,7 @@ class TestHistoryService:
                 message_type="human",
                 session_id=session_id,
                 session=sample_session,
-                metadata={},
+                message_metadata={},
                 created_at=fake.date_time()
             ),
             ChatMessage(
@@ -227,7 +227,7 @@ class TestHistoryService:
                 message_type="ai",
                 session_id=session_id,
                 session=sample_session,
-                metadata={},
+                message_metadata={},
                 created_at=fake.date_time()
             )
         ]
@@ -260,7 +260,7 @@ class TestHistoryService:
                     message_type=message_type,
                     session_id=session_id,
                     session=sample_session,
-                    metadata={}
+                    message_metadata={}
                 )
             )
         
@@ -317,7 +317,7 @@ class TestHistoryService:
             message_type="unknown",
             session_id=session_id,
             session=sample_session,
-            metadata={}
+            message_metadata={}
         )
         
         mock_result = MagicMock()
@@ -345,7 +345,7 @@ class TestHistoryService:
             message_type="human",
             session_id=session_id,
             session=sample_session,
-            metadata={}
+            message_metadata={}
         )
         
         mock_result = MagicMock()
@@ -369,7 +369,7 @@ class TestHistoryService:
             message_type="human",
             session_id=session_id,
             session=sample_session,
-            metadata={}
+            message_metadata={}
         )
         
         mock_result = MagicMock()
@@ -427,7 +427,7 @@ class TestHistoryService:
                     message_type=message_type,
                     session_id=session_id,
                     session=sample_session,
-                    metadata={"index": i}
+                    message_metadata={"index": i}
                 )
             )
         
@@ -454,7 +454,7 @@ class TestHistoryService:
                 message_type="system",
                 session_id=session_id,
                 session=sample_session,
-                metadata={"role": "system"}
+                message_metadata={"role": "system"}
             ),
             ChatMessage(
                 id=2,
@@ -462,7 +462,7 @@ class TestHistoryService:
                 message_type="human",
                 session_id=session_id,
                 session=sample_session,
-                metadata={"role": "user"}
+                message_metadata={"role": "user"}
             ),
             ChatMessage(
                 id=3,
@@ -470,7 +470,7 @@ class TestHistoryService:
                 message_type="ai",
                 session_id=session_id,
                 session=sample_session,
-                metadata={"role": "assistant"}
+                message_metadata={"role": "assistant"}
             )
         ]
         

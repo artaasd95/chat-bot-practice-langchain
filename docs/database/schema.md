@@ -136,7 +136,7 @@ CREATE TABLE chat_messages (
     session_id INTEGER NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
     message_type VARCHAR(20) NOT NULL CHECK (message_type IN ('user', 'assistant', 'system')),
     content TEXT NOT NULL,
-    metadata TEXT,
+    message_metadata TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -156,7 +156,7 @@ CREATE INDEX idx_chat_messages_message_type ON chat_messages(message_type);
 | `session_id` | INTEGER | Reference to the chat session | FOREIGN KEY, NOT NULL |
 | `message_type` | VARCHAR(20) | Message type (user, assistant, system) | CHECK constraint |
 | `content` | TEXT | Message content | NOT NULL |
-| `metadata` | TEXT | Additional message metadata as JSON string | NULLABLE |
+| `message_metadata` | TEXT | Additional message metadata as JSON string | NULLABLE |
 | `created_at` | TIMESTAMP WITH TIME ZONE | Message creation timestamp | DEFAULT CURRENT_TIMESTAMP |
 
 ## Relationships
@@ -173,7 +173,7 @@ CREATE INDEX idx_chat_messages_message_type ON chat_messages(message_type);
 │ hashed_password │      ││ title           │      ││ content         │
 │ full_name       │      ││ created_at      │      ││ role            │
 │ is_active       │      ││ updated_at      │      ││ created_at      │
-│ is_admin        │      ││ is_active       │      ││ metadata        │
+│ is_admin        │      ││ is_active       │      ││ message_metadata│
 │ created_at      │      ││ metadata        │      ││ tokens_used     │
 │ updated_at      │      │└─────────────────┘      ││ processing_time │
 │ last_login      │      │                         │└─────────────────┘
@@ -246,7 +246,7 @@ class ChatSession(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), index=True)
     is_active = Column(Boolean, default=True, index=True)
-    metadata = Column(JSONB, default={})
+    message_metadata = Column(JSONB, default={})
     
     # Relationships
     user = relationship("User", back_populates="chat_sessions")
@@ -271,7 +271,7 @@ class ChatMessage(Base):
     content = Column(Text, nullable=False)
     role = Column(String(20), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
-    metadata = Column(JSONB, default={})
+    message_metadata = Column(JSONB, default={})
     tokens_used = Column(Integer, default=0)
     processing_time_ms = Column(Integer, default=0)
     
@@ -370,7 +370,7 @@ def upgrade():
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
         sa.Column('is_active', sa.Boolean(), nullable=True),
-        sa.Column('metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column('message_metadata', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('uuid')
@@ -407,7 +407,7 @@ def upgrade():
     op.create_index('idx_chat_messages_uuid', 'chat_messages', ['uuid'])
     op.create_index('idx_chat_messages_created_at', 'chat_messages', ['created_at'])
     op.create_index('idx_chat_messages_role', 'chat_messages', ['role'])
-    op.create_index('idx_chat_messages_metadata', 'chat_messages', ['metadata'], postgresql_using='gin')
+    op.create_index('idx_chat_messages_message_metadata', 'chat_messages', ['message_metadata'], postgresql_using='gin')
 
 def downgrade():
     op.drop_table('chat_messages')
