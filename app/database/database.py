@@ -62,7 +62,7 @@ async def init_db():
         return
     
     from app.database.models import User
-    from app.auth.utils import hash_password
+    from app.auth.utils import get_password_hash
     
     engine = get_db_engine()
     session_factory = get_session_factory()
@@ -85,7 +85,7 @@ async def init_db():
             
             if not admin_user:
                 # Create admin user
-                hashed_password = hash_password(settings.ADMIN_PASSWORD)
+                hashed_password = get_password_hash(settings.ADMIN_PASSWORD)
                 admin_user = User(
                     email=settings.ADMIN_EMAIL,
                     hashed_password=hashed_password,
