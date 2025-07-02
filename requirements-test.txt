@@ -94,3 +94,5 @@ pytest-clarity>=1.0.1
 ipdb>=0.13.13
 pytest-sugar>=0.9.7
 pytest-picked>=0.4.6
+
+loguru>=0.7.0
