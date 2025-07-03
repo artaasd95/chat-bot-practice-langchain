@@ -38,22 +38,26 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to connect to database: {e}")
         raise
     
-    # Initialize LLM
+    # Initialize LLM (optional - service can start without it)
+    llm = None
     try:
         llm = get_llm()
         logger.info("LLM initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize LLM: {e}")
-        raise
+        logger.warning(f"LLM initialization failed: {e}")
+        logger.warning("Chat service will start without LLM functionality")
     
-    # Build graph
+    # Build graph (only if LLM is available)
     global graph
-    try:
-        graph = await build_graph(llm)
-        logger.info("Graph built successfully")
-    except Exception as e:
-        logger.error(f"Failed to build graph: {e}")
-        raise
+    if llm:
+        try:
+            graph = await build_graph(llm)
+            logger.info("Graph built successfully")
+        except Exception as e:
+            logger.error(f"Failed to build graph: {e}")
+            logger.warning("Chat service will start without graph functionality")
+    else:
+        logger.info("Skipping graph initialization - no LLM available")
     
     yield
     
@@ -100,7 +104,8 @@ async def health_check():
         "service": "chat",
         "status": "healthy",
         "version": settings.VERSION,
-        "graph_ready": graph is not None
+        "graph_ready": graph is not None,
+        "llm_available": graph is not None
     }
 
 
@@ -112,5 +117,6 @@ async def metrics():
         "status": "running",
         "version": settings.VERSION,
         "graph_ready": graph is not None,
+        "llm_available": graph is not None,
         "uptime": "running"
     }
