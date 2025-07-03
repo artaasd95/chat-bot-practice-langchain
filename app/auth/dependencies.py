@@ -6,7 +6,7 @@ from typing import Optional
 from app.database.database import get_db
 from app.database.models import User
 from app.auth.utils import verify_token, extract_token_from_header
-from app.auth.crud import get_user_by_id, update_last_login
+from app.auth.crud import get_user_by_email, get_user_by_id, update_last_login
 
 # Security scheme
 security = HTTPBearer(auto_error=False)
@@ -67,7 +67,9 @@ async def get_current_active_user(
     """Get current active user and update last login."""
     # Update last login timestamp
     await update_last_login(db, current_user.id)
-    return current_user
+    # Refresh the user object to ensure all fields are up-to-date
+    refreshed_user = await get_user_by_id(db, current_user.id)
+    return refreshed_user
 
 
 async def get_current_admin_user(
