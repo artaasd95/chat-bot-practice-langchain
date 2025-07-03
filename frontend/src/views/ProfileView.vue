@@ -384,35 +384,43 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Delete Account Modal -->
-      <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-          <div class="flex items-center mb-4">
-            <ExclamationTriangleIcon class="w-6 h-6 text-red-600 mr-3" />
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Account</h3>
-          </div>
-          <p class="text-gray-600 dark:text-gray-400 mb-6">
-            This action cannot be undone. This will permanently delete your account and all associated data.
-          </p>
-          <div class="flex justify-end space-x-3">
-            <button
-              @click="showDeleteModal = false"
-              class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-            >
-              Cancel
-            </button>
-            <button
-              @click="deleteAccount"
-              class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
-            >
-              Delete Account
-            </button>
+        <!-- Delete Account Modal -->
+        <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full">
+            <div class="flex items-start">
+              <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                <ExclamationTriangleIcon class="h-6 w-6 text-red-600 dark:text-red-400" aria-hidden="true" />
+              </div>
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                  Delete Account
+                </h3>
+                <div class="mt-2">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Are you sure you want to delete your account? All of your data will be permanently removed. This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+              <button
+                type="button"
+                @click="deleteAccount"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Delete
+              </button>
+              <button
+                type="button"
+                @click="showDeleteModal = false"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:w-auto sm:text-sm"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 </template>
 
 <script setup>
