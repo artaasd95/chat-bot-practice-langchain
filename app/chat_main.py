@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
     global graph
     if llm:
         try:
-            graph = await build_graph(llm)
+            graph = build_graph(llm)
             logger.info("Graph built successfully")
         except Exception as e:
             logger.error(f"Failed to build graph: {e}")

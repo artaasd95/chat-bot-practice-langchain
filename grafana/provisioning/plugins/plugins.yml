@@ -1,0 +1,10 @@
+# Grafana Plugin Provisioning Configuration
+# This file configures plugin provisioning for Grafana
+
+apiVersion: 1
+
+# List of plugins to install
+plugins:
+  # Core plugins are automatically available
+  # Add any additional plugins here if needed
+  []

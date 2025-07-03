@@ -50,7 +50,7 @@ async def build_graph(llm: BaseLLM) -> StateGraph:
     graph.set_entry_point("preprocess")
     
     # Compile the graph
-    compiled_graph = await graph.compile()
+    compiled_graph = graph.compile()
     logger.info("Chat graph built successfully")
     
     return compiled_graph
@@ -97,7 +97,7 @@ async def build_advanced_graph(llm: BaseLLM, additional_nodes: Dict[str, Callabl
     graph.set_entry_point("preprocess")
     
     # Compile the graph
-    compiled_graph = await graph.compile()
+    compiled_graph = graph.compile()
     logger.info("Advanced chat graph built successfully")
     
     return compiled_graph
@@ -174,7 +174,7 @@ async def build_conditional_graph(llm: BaseLLM) -> StateGraph:
     graph.set_entry_point("preprocess")
     
     # Compile the graph
-    compiled_graph = await graph.compile()
+    compiled_graph = graph.compile()
     logger.info("Conditional chat graph built successfully")
     
     return compiled_graph
@@ -248,7 +248,7 @@ async def build_enhanced_graph(llm: BaseLLM) -> StateGraph:
     graph.set_entry_point("load_history")
     
     # Compile the graph
-    compiled_graph = await graph.compile()
+    compiled_graph = graph.compile()
     logger.info("Enhanced chat graph built successfully")
     
     return compiled_graph
