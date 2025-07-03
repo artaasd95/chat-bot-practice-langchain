@@ -30,15 +30,16 @@ redis-1          | 1:C 03 Jul 2025 14:11:51.443 # WARNING Memory overcommit must
 ```
 
 **Root Cause:**
-Redis requires memory overcommit to be enabled for proper operation, especially for background saves and replication.
+Redis requires memory overcommit to be enabled for proper operation, especially for background saves and replication. However, this is an informational warning that doesn't prevent Redis from functioning.
 
 **Solution:**
-- Added `vm.overcommit_memory=1` sysctls setting to Redis service in docker-compose.yml
-- Created a Redis configuration file with optimized settings
+- Created a Redis configuration file with optimized settings for containerized environment
+- Note: The sysctl `vm.overcommit_memory=1` cannot be set in Docker containers without privileged mode
+- This warning is harmless in containerized environments and can be safely ignored
 
 **Files Modified:**
-- `docker-compose.yml` - Added sysctls configuration for Redis
-- `redis.conf` - New Redis configuration file
+- `docker-compose.yml` - Removed invalid sysctls configuration
+- `redis.conf` - New Redis configuration file with containerized optimizations
 
 ### 3. Redis Configuration File Warning
 

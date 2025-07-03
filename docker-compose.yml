@@ -23,16 +23,15 @@ services:
   # Redis for session management and caching
   redis:
     image: redis:7-alpine
+    container_name: chat-bot-practice-langchain-redis-1
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
-      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
       - redis_data:/data
     ports:
       - "6379:6379"
     networks:
       - chatbot-network
-    sysctls:
-      - vm.overcommit_memory=1
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s
