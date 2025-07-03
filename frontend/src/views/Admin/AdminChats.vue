@@ -168,7 +168,8 @@
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                <tr v-if="isLoading" v-for="i in 5" :key="i" class="animate-pulse">
+                <template v-if="isLoading">
+                  <tr v-for="i in 5" :key="i" class="animate-pulse">
                   <td class="px-6 py-4">
                     <div class="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
                   </td>
@@ -202,7 +203,8 @@
                       <div class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
                     </div>
                   </td>
-                </tr>
+                  </tr>
+                </template>
                 
                 <tr v-else v-for="session in filteredSessions" :key="session.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td class="px-6 py-4">
@@ -325,10 +327,9 @@
             </div>
           </div>
         </div>
-      </div>
 
-    <!-- Session Detail Modal -->
-    <div v-if="showSessionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <!-- Session Detail Modal -->
+        <div v-if="showSessionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl mx-4 h-5/6 flex flex-col">
         <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div>

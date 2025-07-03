@@ -152,7 +152,8 @@
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                <tr v-if="isLoading" v-for="i in 5" :key="i" class="animate-pulse">
+                <template v-if="isLoading">
+                  <tr v-for="i in 5" :key="`skeleton-${i}`" class="animate-pulse">
                   <td class="px-6 py-4">
                     <div class="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
                   </td>
@@ -184,8 +185,10 @@
                     </div>
                   </td>
                 </tr>
+                </template>
                 
-                <tr v-else v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <template v-else>
+                  <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td class="px-6 py-4">
                     <input
                       type="checkbox"
@@ -262,8 +265,9 @@
                       </button>
                     </div>
                   </td>
-                </tr>
-                
+                  </tr>
+                </template>
+
                 <tr v-if="!isLoading && filteredUsers.length === 0">
                   <td colspan="7" class="px-6 py-12 text-center">
                     <UsersIcon class="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -271,153 +275,152 @@
                   </td>
                 </tr>
               </tbody>
-            </table>
-          </div>
-          
-          <!-- Pagination -->
-          <div v-if="totalPages > 1" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between">
-              <div class="text-sm text-gray-700 dark:text-gray-300">
-                Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalUsers) }} of {{ totalUsers }} results
-              </div>
-              <div class="flex items-center space-x-2">
-                <button
-                  @click="currentPage--"
-                  :disabled="currentPage === 1"
-                  class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  Previous
-                </button>
-                <span class="px-3 py-1 text-sm bg-primary-600 text-white rounded-md">
-                  {{ currentPage }}
-                </span>
-                <button
-                  @click="currentPage++"
-                  :disabled="currentPage === totalPages"
-                  class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  Next
-                </button>
+              </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div v-if="totalPages > 1" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+              <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700 dark:text-gray-300">
+                  Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalUsers) }} of {{ totalUsers }} results
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button
+                    @click="currentPage--"
+                    :disabled="currentPage === 1"
+                    class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    Previous
+                  </button>
+                  <span class="px-3 py-1 text-sm bg-primary-600 text-white rounded-md">
+                    {{ currentPage }}
+                  </span>
+                  <button
+                    @click="currentPage++"
+                    :disabled="currentPage === totalPages"
+                    class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-    <!-- Create/Edit User Modal -->
-    <div v-if="showCreateModal || showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ showCreateModal ? 'Create New User' : 'Edit User' }}
-          </h3>
-          <button
-            @click="closeModal"
-            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <XMarkIcon class="w-6 h-6" />
-          </button>
-        </div>
-        
-        <form @submit.prevent="saveUser" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Full Name
-            </label>
-            <input
-              v-model="userForm.fullName"
-              type="text"
-              required
-              class="input-field"
-              :class="{ 'border-red-500 dark:border-red-400': userErrors.fullName }"
-            />
-            <p v-if="userErrors.fullName" class="mt-1 text-sm text-red-600 dark:text-red-400">
-              {{ userErrors.fullName }}
-            </p>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email Address
-            </label>
-            <input
-              v-model="userForm.email"
-              type="email"
-              required
-              class="input-field"
-              :class="{ 'border-red-500 dark:border-red-400': userErrors.email }"
-            />
-            <p v-if="userErrors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">
-              {{ userErrors.email }}
-            </p>
-          </div>
-          
-          <div v-if="showCreateModal">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Password
-            </label>
-            <input
-              v-model="userForm.password"
-              type="password"
-              required
-              class="input-field"
-              :class="{ 'border-red-500 dark:border-red-400': userErrors.password }"
-            />
-            <p v-if="userErrors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">
-              {{ userErrors.password }}
-            </p>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Role
-            </label>
-            <select
-              v-model="userForm.role"
-              class="input-field"
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          
-          <div class="flex items-center">
-            <input
-              v-model="userForm.isActive"
-              type="checkbox"
-              id="isActive"
-              class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
-            />
-            <label for="isActive" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
-              Active user
-            </label>
-          </div>
-          
-          <div class="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              @click="closeModal"
-              class="btn-secondary"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              :disabled="isSaving"
-              class="btn-primary"
-            >
-              <div v-if="isSaving" class="loading-dots mr-2">
-                <div></div>
-                <div></div>
-                <div></div>
+          <!-- Create/Edit User Modal -->
+          <div v-if="showCreateModal || showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  {{ showCreateModal ? 'Create New User' : 'Edit User' }}
+                </h3>
+                <button
+                  @click="closeModal"
+                  class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <XMarkIcon class="w-6 h-6" />
+                </button>
               </div>
-              {{ showCreateModal ? 'Create User' : 'Save Changes' }}
-            </button>
+              
+              <form @submit.prevent="saveUser" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    v-model="userForm.fullName"
+                    type="text"
+                    required
+                    class="input-field"
+                    :class="{ 'border-red-500 dark:border-red-400': userErrors.fullName }"
+                  />
+                  <p v-if="userErrors.fullName" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {{ userErrors.fullName }}
+                  </p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    v-model="userForm.email"
+                    type="email"
+                    required
+                    class="input-field"
+                    :class="{ 'border-red-500 dark:border-red-400': userErrors.email }"
+                  />
+                  <p v-if="userErrors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {{ userErrors.email }}
+                  </p>
+                </div>
+                
+                <div v-if="showCreateModal">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Password
+                  </label>
+                  <input
+                    v-model="userForm.password"
+                    type="password"
+                    required
+                    class="input-field"
+                    :class="{ 'border-red-500 dark:border-red-400': userErrors.password }"
+                  />
+                  <p v-if="userErrors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {{ userErrors.password }}
+                  </p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Role
+                  </label>
+                  <select
+                    v-model="userForm.role"
+                    class="input-field"
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                
+                <div class="flex items-center">
+                  <input
+                    v-model="userForm.isActive"
+                    type="checkbox"
+                    id="isActive"
+                    class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
+                  />
+                  <label for="isActive" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    Active user
+                  </label>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    @click="closeModal"
+                    class="btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    :disabled="isSaving"
+                    class="btn-primary"
+                  >
+                    <div v-if="isSaving" class="loading-dots mr-2">
+                      <div></div>
+                      <div></div>
+                      <div></div>
+                    </div>
+                    {{ showCreateModal ? 'Create New User' : 'Save Changes' }}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </form>
-      </div>
-    </div>
-  </div>
+        </div>
 </template>
 
 <script setup>
