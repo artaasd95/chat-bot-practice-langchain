@@ -20,9 +20,9 @@ WORKDIR /app
 RUN mkdir -p /app/logs
 
 # Copy requirements and install dependencies
-COPY requirements-shared.txt .
+COPY requirements.txt .
 # For production builds, add --no-cache-dir flag to reduce image size
-RUN pip install -r requirements-shared.txt
+RUN pip install -r requirements.txt
 
 # Copy application code
 COPY app/ ./app/

@@ -1,34 +1,47 @@
-# Core dependencies
-fastapi>=0.104.0
-uvicorn>=0.23.2
-pydantic>=2.4.2
+# Core FastAPI dependencies
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
 python-dotenv>=1.0.0
-loguru>=0.7.2
-
-# LangChain and LangGraph
-langchain>=0.0.335
-langchain-openai>=0.0.2
-langchain-deepseek>=0.1.0
-aiohttp>=3.8.0
-langgraph>=0.0.19
-
-# Async HTTP
-aiohttp>=3.8.6
-tenacity>=8.2.3
-
-# Authentication and Security
-pyjwt>=2.8.0
-passlib[bcrypt]>=1.7.4
 python-multipart>=0.0.6
-email-validator>=2.1.0
 
 # Database
-sqlalchemy>=2.0.23
+sqlalchemy[asyncio]>=2.0.23
 alembic>=1.12.1
-aiosqlite>=0.19.0  # For SQLite async support
+asyncpg>=0.29.0
+aiosqlite>=0.19.0
 
-# Interactive CLI (if needed)
-prompt-toolkit>=3.0.38
+# Authentication and Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.1.2
+email-validator>=2.0.0
 
-# For production
-gunicorn>=21.2.0  # For production deployment
+# Redis for caching and sessions
+redis>=5.0.1
+aioredis>=2.0.1
+
+# HTTP clients
+requests>=2.31.0
+aiohttp>=3.9.1
+tenacity>=8.2.3
+
+# LangChain and AI
+langchain>=0.0.350
+langchain-community>=0.0.2
+langchain-openai>=0.0.2
+langchain-deepseek>=0.1.0
+langgraph>=0.5.0
+openai>=1.6.1
+langsmith>=0.0.69
+
+# WebSocket support
+websockets>=12.0
+
+# Logging and monitoring
+loguru>=0.7.0
+structlog>=23.2.0
+
+# Production server
+gunicorn>=21.2.0

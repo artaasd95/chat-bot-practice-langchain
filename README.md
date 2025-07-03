@@ -75,8 +75,11 @@ A scalable asynchronous chat system built with LangGraph and FastAPI, featuring 
 │   └── database/         # Database documentation
 │       └── schema.md     # Database schema and models
 ├── tests/                # Test files
-│   └── test_enhanced_graph.py  # Enhanced graph tests
-└── requirements.txt      # Project dependencies
+│   ├── test_enhanced_graph.py     # Enhanced graph tests
+│   ├── test_deepseek_integration.py # DeepSeek integration tests
+│   └── ...               # Other test modules organized by feature
+├── requirements.txt      # Consolidated project dependencies
+└── requirements-test.txt # Testing dependencies
 ```
 
 ## Setup

@@ -20,9 +20,9 @@ WORKDIR /app
 RUN mkdir -p /app/logs
 
 # Copy requirements and install dependencies
-COPY requirements-chat.txt requirements-shared.txt ./
-# For production builds, add --no-cache-dir flag to reduce image size
-RUN pip install -r requirements-chat.txt
+COPY requirements.txt .
+# Install dependencies
+RUN pip install -r requirements.txt
 
 # Copy application code
 COPY app/ ./app/
