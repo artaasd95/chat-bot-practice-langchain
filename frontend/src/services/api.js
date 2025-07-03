@@ -3,7 +3,7 @@ import { useToast } from 'vue-toastification'
 
 // Create axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:80/api/v1',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
@@ -41,7 +41,7 @@ api.interceptors.response.use(
       if (refreshToken) {
         try {
           const response = await axios.post(
-            `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/refresh`,
+            `${import.meta.env.VITE_API_URL || 'http://localhost:80/api/v1'}/auth/refresh`,
             { refresh_token: refreshToken }
           )
           
